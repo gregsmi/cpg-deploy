@@ -26,7 +26,7 @@ resource "azurerm_role_assignment" "roles" {
   principal_id         = module.access_groups[each.value.group].object_id
 }
 
-resource "azurerm_role_assignment" "roles" {
+resource "azurerm_role_assignment" "readers" {
   for_each = { for index, ra in var.storage_readers : index => ra }
 
   scope                = azurerm_storage_container.buckets[each.value.bucket].resource_manager_id
