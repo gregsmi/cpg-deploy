@@ -1,11 +1,5 @@
 #!/bin/bash
 
-# ANSI escape codes for coloring.
-readonly ANSI_RED="\033[0;31m"
-readonly ANSI_GREEN="\033[0;32m"
-readonly ANSI_RESET="\033[0;0m"
-GETOPTS_STR=":hvc"
-
 #######################################
 # Print script usage
 #######################################
@@ -14,16 +8,6 @@ usage() {
   echo "./$(basename $0) [-v] [-c] --> runs terraform init for the local project"
   echo "    -v: verbose mode"
   echo "    -c: create mode - one-time init of a new project to create root resources"
-}
-
-#######################################
-# Print error message and exit
-# Arguments:
-#   Message to print.
-#######################################
-err() {
-  echo -e "${ANSI_RED}ERROR: $*${ANSI_RESET}" >&2
-  exit 1
 }
 
 #######################################
@@ -55,12 +39,11 @@ login_azure() {
 }
 
 #######################################
-# Create a Resource Group in Azure.
+# Ensure existence of a Resource Group in Azure.
 # Arguments:
-#   Name for the Resource Group
-#   Azure location to create the Resource Group.
-# Returns:
-#   0 If Resource Group is created.
+#   Name for the Resource Group.
+#   Azure location of the Resource Group.
+#   True to create Resource Group if it doesn't exist, otherwise error.
 #######################################
 ensure_resource_group() {
   local resource_group_name="$1"
@@ -73,20 +56,15 @@ ensure_resource_group() {
   rg_exists=$(az group exists -n "${resource_group_name}")
   if [[ $? -ne 0 ]]; then
     err "Failed to check for existence of resource group ${resource_group_name}. Probably a permissions issue."
-    return 1
   fi
 
   if [[ ${rg_exists} == "true" ]]; then
     echo "Resource group ${resource_group_name} already exists."
-    return 1
   elif [[ ${create_resources} == "true" ]]; then
     echo "Resource group ${resource_group_name} does not exist - creating..."
     1>/dev/null az group create --name "${resource_group_name}" --location "${location}"
     if [[ $? -ne 0 ]]; then
       err "Failed to create resource group ${resource_group_name}"
-      return 1
-    else
-      return 0
     fi
   else
     err "Resource group ${resource_group_name} doesn't exist (run with '-c' for first-time initialization)."
@@ -94,13 +72,12 @@ ensure_resource_group() {
 }
 
 #######################################
-# Create a Storage Account in Azure.
+# Ensure existence of a Storage Account in Azure.
 # Arguments:
-#   Name for the Storage Account
-#   Name of the Resource Group
-#   Azure location to create the Resource Group.
-# Returns:
-#   0 If Storage Account is created.
+#   Name for the Storage Account.
+#   Name of the Resource Group.
+#   Azure location for the Storage Account.
+#   True to create Storage Account if it doesn't exist, otherwise error.
 #######################################
 ensure_storage_account() {
   local storage_account_name="$1"
@@ -112,7 +89,6 @@ ensure_storage_account() {
   echo "Checking if storage account ${storage_account_name} exists..."
   # Uses jq to parse the json output and grab the "reason" field. -r for raw so there aren't quotes in the string.
   sa_reason=$(az storage account check-name -n "${storage_account_name}" | jq -r .reason)
-  # TODO, storage account names need to be globally unique, should add a random string here.
   if [[ $? -ne 0 ]]; then
     err "Failed to check for existence of storage account ${storage_account_name}. Probably a permissions issue."
   fi
@@ -131,12 +107,11 @@ ensure_storage_account() {
 }
 
 #######################################
-# Create a Storage Container in Azure.
+# Ensure existence of a Storage Container in Azure.
 # Arguments:
-#   Name for the Storage Container
-#   Name of the Storage Account
-# Returns:
-#   0 If the Storage Container is created.
+#   Name for the Storage Container.
+#   Name of the Storage Account.
+#   True to create Storage Container if it doesn't exist, otherwise error.
 #######################################
 ensure_storage_container() {
   local container_name="$1"
@@ -180,7 +155,6 @@ make_tfvars() {
   # Write out new default tfvars file.
   cat << EOF > terraform.tfvars
 deployment_name     = "${deployment_name}"
-resource_group_name = "${resource_group_name}"
 EOF
 
   echo "Variable file terraform.tfvars created."
@@ -188,7 +162,7 @@ EOF
 
 main() {
   # Process options.
-  while getopts "${GETOPTS_STR}" option; do
+  while getopts ":hvc" option; do
     case "${option}" in
       h) usage; exit 0;;
       v) is_verbose="true";;
@@ -210,6 +184,7 @@ main() {
 
   local RESOURCE_GROUP_NAME="${DEPLOYMENT_NAME}-rg"
   local STORAGE_ACCOUNT="${DEPLOYMENT_NAME}tfsa"
+  local container_name="tfstate"
   local sa_access_key
 
   # Login to Azure using the specified tenant if not already logged in.
@@ -220,16 +195,25 @@ main() {
   ensure_resource_group "${RESOURCE_GROUP_NAME}" "${LOCATION}" ${create_resources}
   # Create storage account for Terraform state if it doesn't exist.
   ensure_storage_account "${STORAGE_ACCOUNT}" "${RESOURCE_GROUP_NAME}" "${LOCATION}" ${create_resources}
-  # Create container to store Terraform state if it doesn't exist.
-  ensure_storage_container "tfstate" "${STORAGE_ACCOUNT}" ${create_resources}
-  # Get an access key to the storage account for Terraform state. Use jq to grab the "value" field of the first key. "-r" option gives raw output without quotes.
-  sa_access_key=$(az storage account keys list --resource-group "${RESOURCE_GROUP_NAME}" --account-name "${STORAGE_ACCOUNT}" --subscription "${AZURE_SUBSCRIPTION}" | jq -r .[0].value)
+  # Create "tfstate" container to store Terraform state if it doesn't exist.
+  ensure_storage_container ${container_name} "${STORAGE_ACCOUNT}" ${create_resources}
+  # Get an access key to the storage account for Terraform state. Use jq to grab the 
+  # "value" field of the first key. "-r" option gives raw output without quotes.
+  sa_access_key=$(az storage account keys list --resource-group "${RESOURCE_GROUP_NAME}" \
+      --account-name "${STORAGE_ACCOUNT}" --subscription "${AZURE_SUBSCRIPTION}" | jq -r .[0].value)
   if [[ $? -ne 0 ]]; then
     err "Failed to get access key for storage account ${STORAGE_ACCOUNT}"
   fi
 
-  # Configure Terraform backend (azurerm) to use Azure blob container to store state. This configuration is persisted in local tfstate.
-  terraform init -reconfigure -upgrade -backend-config="storage_account_name=${STORAGE_ACCOUNT}" -backend-config="container_name=tfstate" -backend-config="access_key=${sa_access_key}" -backend-config="key=hail.tfstate"
+  # Suppress unnecessary interactive text.
+  export TF_IN_AUTOMATION=true
+  # Configure Terraform backend (azurerm) to use Azure blob container to 
+  # store state. This configuration is persisted in local tfstate.
+  terraform init -reconfigure -upgrade \
+    -backend-config="storage_account_name=${STORAGE_ACCOUNT}" \
+    -backend-config="container_name=${container_name}" \
+    -backend-config="access_key=${sa_access_key}" \
+    -backend-config="key=deploy.tfstate"
 
   # Create/update Terraform variables file.
   make_tfvars "${DEPLOYMENT_NAME}" "${RESOURCE_GROUP_NAME}"

@@ -1,13 +1,25 @@
-output "deployment_name" {
-  value = var.deployment_name
+output "deployment" {
+  value = {
+    resource_group = data.azurerm_resource_group.rg.name
+    location       = data.azurerm_resource_group.rg.location
+    admin_users    = [for user in data.azuread_users.admins.users : user.mail]
+    datasets       = [for ds in module.datasets : ds.name]
+  }
 }
-output "resource_group" {
-  value = data.azurerm_resource_group.rg.name
+output "CPG_DEPLOY_CONFIG" {
+  value = local.CPG_DEPLOY_CONFIG
 }
-output "location" {
-  value = data.azurerm_resource_group.rg.location
+output "sample_metadata_dbserver" {
+  value = module.sm_db.fqdn
 }
-output "sample_metadata_pwd" {
-  value = random_password.db_root_password.result
+output "SM_DBCREDS" {
+  value     = module.sm_db.credentials
   sensitive = true
+}
+output "AZURE_CREDENTIALS" {
+  value     = module.ci_cd_sp.credentials
+  sensitive = true
+}
+output "HAIL_DEPLOY_CONFIG" {
+  value = local.HAIL_DEPLOY_CONFIG
 }

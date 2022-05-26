@@ -1,0 +1,10 @@
+{
+    "administrators": [
+        "gregsmi_microsoft.com#EXT#"
+    ],
+    "hail": {
+        "domain": "azhailtest0.net",
+        "resource_group": "hailms01",
+        "cluster_name": "vdc"
+    }
+}
