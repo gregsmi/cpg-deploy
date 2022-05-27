@@ -18,9 +18,12 @@ provider "kubernetes" {
 }
 
 locals {
-  config         = jsondecode(file("config/config.json"))
+  # Local Json file containing deployment-wide configuration.
+  config = jsondecode(file("config/config.json"))
+  # Names of the 3 deployed app service apps.
   smapi_app_name = "smapi-${var.deployment_name}"
   arapi_app_name = "arapi-${var.deployment_name}"
+  arweb_app_name = "arweb-${var.deployment_name}"
   HAIL_DEPLOY_CONFIG = {
     location : "external",
     default_namespace : "default",
@@ -75,25 +78,54 @@ module "sm_app" {
   ]
 }
 
+module "arweb_app" {
+  source = "./modules/web_app"
+
+  app_name                   = local.arweb_app_name
+  resource_group             = data.azurerm_resource_group.rg
+  app_service_plan_id        = azurerm_app_service_plan.appserviceplan.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.la.id
+  subnet_id                  = azurerm_subnet.app_subnet.id
+  container_image            = "${azurerm_container_registry.acr.login_server}/analysis-runner/web:latest"
+  login_tenant               = data.azurerm_client_config.current.tenant_id
+  app_settings = {
+    # Azure known setting
+    "WEBSITES_PORT" = 8080
+    # App-specific settings
+    "PORT"              = 8080
+    "CPG_DEPLOY_CONFIG" = jsonencode(local.CPG_DEPLOY_CONFIG)
+    "BUCKET_SUFFIX"     = "main-web"
+  }
+  role_assignments = [
+    { role = "AcrPull", scope = azurerm_container_registry.acr.id },
+    { role = "Key Vault Secrets User", scope = azurerm_key_vault.keyvault.id }
+  ]
+}
+
 module "datasets" {
   source = "./modules/dataset"
 
-  for_each      = fileset(path.module, "config/*.ds.json")
-  tenant_id     = data.azurerm_client_config.current.tenant_id
-  group_readers = [module.sm_app.principal_id]
-  # storage_readers = [
-  #   { bucket = "main-web", principal = module.ar_app.principal_id },
-  #   { bucket = "test-web", principal = module.ar_test_app.principal_id }
-  # ]
+  for_each  = fileset(path.module, "config/*.ds.json")
+  tenant_id = data.azurerm_client_config.current.tenant_id
+  group_readers = [
+    module.sm_app.principal_id,
+    module.arweb_app.principal_id
+  ]
+  storage_readers = [
+    { bucket = "main-web", principal = module.arweb_app.principal_id },
+    # { bucket = "test-web", principal = module.arweb_test_app.principal_id }
+  ]
   definition = jsondecode(file(each.key))
 }
 
+# Identity used for Github Action-based deployment of app services.
 module "ci_cd_sp" {
   source = "./modules/sp"
 
   display_name = "${var.deployment_name}-deployment-principal"
   role_assignments = [
     { role = "AcrPush", scope = azurerm_container_registry.acr.id },
-    { role = "Contributor", scope = module.sm_app.id }
+    { role = "Contributor", scope = module.sm_app.id },
+    { role = "Contributor", scope = module.arweb_app.id }
   ]
 }
