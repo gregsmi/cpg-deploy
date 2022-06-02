@@ -42,10 +42,10 @@ resource "azurerm_role_assignment" "key_adding" {
 }
 
 resource "azurerm_role_assignment" "key_users" {
-  for_each             = toset(var.group_readers)
+  for_each             = { for index, user in var.group_readers : index => user }
   scope                = azurerm_key_vault.keyvault.id
   role_definition_name = "Key Vault Secrets User"
-  principal_id         = each.key
+  principal_id         = each.value
 }
 
 resource "azurerm_key_vault_secret" "dataset_membership" {

@@ -20,21 +20,24 @@ provider "kubernetes" {
 locals {
   # Local Json file containing deployment-wide configuration.
   config = jsondecode(file("config/config.json"))
-  # Names of the 3 deployed app service apps.
+
   smapi_app_name = "smapi-${var.deployment_name}"
   arapi_app_name = "arapi-${var.deployment_name}"
-  arweb_app_name = "arweb-${var.deployment_name}"
+
   HAIL_DEPLOY_CONFIG = {
     location : "external",
     default_namespace : "default",
     domain : local.config.hail.domain
   }
+
   CPG_DEPLOY_CONFIG = {
     cloud : "azure",
     sample_metadata_project : var.deployment_name,
     sample_metadata_host : "https://${local.smapi_app_name}.azurewebsites.net/",
     analysis_runner_project : var.deployment_name,
     analysis_runner_host : "https://${local.arapi_app_name}.azurewebsites.net/",
+    web_url_template : "https://{namespace}-web-${var.deployment_name}.azurewebsites.net/{dataset}",
+    container_registry : azurerm_container_registry.acr.login_server
   }
 }
 
@@ -78,10 +81,11 @@ module "sm_app" {
   ]
 }
 
-module "arweb_app" {
-  source = "./modules/web_app"
+module "arweb_apps" {
+  source   = "./modules/web_app"
+  for_each = toset(["main", "test"])
 
-  app_name                   = local.arweb_app_name
+  app_name                   = "${each.key}-web-${var.deployment_name}"
   resource_group             = data.azurerm_resource_group.rg
   app_service_plan_id        = azurerm_app_service_plan.appserviceplan.id
   log_analytics_workspace_id = azurerm_log_analytics_workspace.la.id
@@ -94,7 +98,7 @@ module "arweb_app" {
     # App-specific settings
     "PORT"              = 8080
     "CPG_DEPLOY_CONFIG" = jsonencode(local.CPG_DEPLOY_CONFIG)
-    "BUCKET_SUFFIX"     = "main-web"
+    "BUCKET_SUFFIX"     = "${each.key}-web"
   }
   role_assignments = [
     { role = "AcrPull", scope = azurerm_container_registry.acr.id },
@@ -103,17 +107,18 @@ module "arweb_app" {
 }
 
 module "datasets" {
-  source = "./modules/dataset"
+  source   = "./modules/dataset"
+  for_each = fileset(path.module, "config/*.ds.json")
 
-  for_each  = fileset(path.module, "config/*.ds.json")
   tenant_id = data.azurerm_client_config.current.tenant_id
   group_readers = [
     module.sm_app.principal_id,
-    module.arweb_app.principal_id
+    module.arweb_apps["main"].principal_id,
+    module.arweb_apps["test"].principal_id
   ]
   storage_readers = [
-    { bucket = "main-web", principal = module.arweb_app.principal_id },
-    # { bucket = "test-web", principal = module.arweb_test_app.principal_id }
+    { bucket = "main-web", principal = module.arweb_apps["main"].principal_id },
+    { bucket = "test-web", principal = module.arweb_apps["test"].principal_id }
   ]
   definition = jsondecode(file(each.key))
 }
@@ -126,6 +131,7 @@ module "ci_cd_sp" {
   role_assignments = [
     { role = "AcrPush", scope = azurerm_container_registry.acr.id },
     { role = "Contributor", scope = module.sm_app.id },
-    { role = "Contributor", scope = module.arweb_app.id }
+    { role = "Contributor", scope = module.arweb_apps["main"].id },
+    { role = "Contributor", scope = module.arweb_apps["test"].id }
   ]
 }

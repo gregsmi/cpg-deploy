@@ -23,9 +23,9 @@ terraform {
   backend "azurerm" {}
 }
 
-# provider "azuread" {}
+provider "azuread" {
+}
 
-# Configure the Azure provider
 provider "azurerm" {
   features {}
 }
