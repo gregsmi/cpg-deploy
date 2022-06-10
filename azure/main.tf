@@ -4,6 +4,8 @@ data "azurerm_resource_group" "rg" {
   name = "${var.deployment_name}-rg"
 }
 
+# A K8s connection is used so each dataset module can automatically extract 
+# the appropriate Hail service principal secret to put in server-config.
 data "azurerm_kubernetes_cluster" "hail" {
   name                = local.config.hail.cluster_name
   resource_group_name = local.config.hail.resource_group
@@ -81,6 +83,30 @@ module "sm_app" {
   ]
 }
 
+module "ar_app" {
+  source = "./modules/web_app"
+
+  app_name                   = local.arapi_app_name
+  resource_group             = data.azurerm_resource_group.rg
+  app_service_plan_id        = azurerm_app_service_plan.appserviceplan.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.la.id
+  subnet_id                  = azurerm_subnet.app_subnet.id
+  container_image            = "${azurerm_container_registry.acr.login_server}/analysis-runner/images/server:latest"
+  login_tenant               = data.azurerm_client_config.current.tenant_id
+  app_settings = {
+    # Azure known setting
+    "WEBSITES_PORT" = 8080
+    # App-specific settings
+    "PORT"              = 8080
+    "CPG_DEPLOY_CONFIG" = jsonencode(local.CPG_DEPLOY_CONFIG)
+    "DRIVER_IMAGE"      = "${azurerm_container_registry.acr.login_server}/analysis-runner/images/driver:latest"
+  }
+  role_assignments = [
+    { role = "AcrPull", scope = azurerm_container_registry.acr.id },
+    { role = "Key Vault Secrets User", scope = azurerm_key_vault.keyvault.id }
+  ]
+}
+
 module "arweb_apps" {
   source   = "./modules/web_app"
   for_each = toset(["main", "test"])
@@ -113,6 +139,7 @@ module "datasets" {
   tenant_id = data.azurerm_client_config.current.tenant_id
   group_readers = [
     module.sm_app.principal_id,
+    module.ar_app.principal_id,
     module.arweb_apps["main"].principal_id,
     module.arweb_apps["test"].principal_id
   ]
@@ -123,6 +150,24 @@ module "datasets" {
   definition = jsondecode(file(each.key))
 }
 
+# Use main deployment storage account for config container.
+data "azurerm_storage_account" "main" {
+  name                     = "${var.deployment_name}tfsa"
+  resource_group_name      = data.azurerm_resource_group.rg.name
+}
+resource "azurerm_storage_container" "config" {
+  name                  = "config"
+  storage_account_name  = data.azurerm_storage_account.main.name
+  container_access_type = "private"
+}
+# Give each dataset's "access" group r/w permissions.
+resource "azurerm_role_assignment" "roles" {
+  for_each = module.datasets
+  scope                = azurerm_storage_container.config.resource_manager_id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = each.value.access_group_id
+}
+
 # Identity used for Github Action-based deployment of app services.
 module "ci_cd_sp" {
   source = "./modules/sp"
@@ -131,6 +176,7 @@ module "ci_cd_sp" {
   role_assignments = [
     { role = "AcrPush", scope = azurerm_container_registry.acr.id },
     { role = "Contributor", scope = module.sm_app.id },
+    { role = "Contributor", scope = module.ar_app.id },
     { role = "Contributor", scope = module.arweb_apps["main"].id },
     { role = "Contributor", scope = module.arweb_apps["test"].id }
   ]

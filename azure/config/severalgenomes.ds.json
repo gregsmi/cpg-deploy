@@ -10,8 +10,7 @@
         "web-access":[]
     },
     "allowed_repos": [
-        "severalgenomes",
-        "production-pipelines",
-        "fewgenomes"
+        "gregsmi/severalgenomes",
+        "gregsmi/analysis-runner"
     ]
 }

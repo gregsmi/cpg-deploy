@@ -53,6 +53,8 @@ resource "azurerm_key_vault_secret" "dataset_membership" {
   name         = "${var.definition.name}-${each.key}-members-cache"
   value        = join(",", distinct(each.value.login_ids))
   key_vault_id = azurerm_key_vault.keyvault.id
+  # TF user must have Officer role before TF can add secrets.
+  depends_on = [azurerm_role_assignment.key_adding]
 }
 
 resource "azurerm_key_vault_secret" "sample_metadata_membership" {
@@ -60,4 +62,6 @@ resource "azurerm_key_vault_secret" "sample_metadata_membership" {
   name         = "${var.definition.name}-sample-metadata-${each.key}-members-cache"
   value        = join(",", distinct(each.value))
   key_vault_id = azurerm_key_vault.keyvault.id
+  # TF user must have Officer role before TF can add secrets.
+  depends_on = [azurerm_role_assignment.key_adding]
 }

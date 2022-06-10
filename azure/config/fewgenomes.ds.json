@@ -10,6 +10,6 @@
         "web-access":[]
     },
     "allowed_repos": [
-        "fewgenomes"
+        "gregsmi/fewgenomes"
     ]
 }

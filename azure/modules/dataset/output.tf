@@ -11,3 +11,7 @@ output "config" {
     fullToken     = local.hail_tokens.full.default
   }
 }
+
+output "access_group_id" {
+  value = module.access_groups["access"].object_id
+}
