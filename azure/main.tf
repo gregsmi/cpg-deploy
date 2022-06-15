@@ -152,8 +152,8 @@ module "datasets" {
 
 # Use main deployment storage account for config container.
 data "azurerm_storage_account" "main" {
-  name                     = "${var.deployment_name}tfsa"
-  resource_group_name      = data.azurerm_resource_group.rg.name
+  name                = "${var.deployment_name}tfsa"
+  resource_group_name = data.azurerm_resource_group.rg.name
 }
 resource "azurerm_storage_container" "config" {
   name                  = "config"
@@ -162,7 +162,7 @@ resource "azurerm_storage_container" "config" {
 }
 # Give each dataset's "access" group r/w permissions.
 resource "azurerm_role_assignment" "roles" {
-  for_each = module.datasets
+  for_each             = module.datasets
   scope                = azurerm_storage_container.config.resource_manager_id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = each.value.access_group_id

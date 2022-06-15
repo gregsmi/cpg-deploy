@@ -19,6 +19,8 @@ resource "azurerm_key_vault_secret" "server_config" {
   name         = "server-config"
   value        = jsonencode({ for ds in module.datasets : ds.name => ds.config })
   key_vault_id = azurerm_key_vault.keyvault.id
+  # TF user must have Officer role before TF can add secrets.
+  depends_on = [azurerm_role_assignment.key_adding]
 }
 
 data "azuread_users" "admins" {
@@ -28,4 +30,6 @@ resource "azurerm_key_vault_secret" "global_admins" {
   name         = "project-creator-users"
   value        = join(",", [for user in data.azuread_users.admins.users : user.mail])
   key_vault_id = azurerm_key_vault.keyvault.id
+  # TF user must have Officer role before TF can add secrets.
+  depends_on = [azurerm_role_assignment.key_adding]
 }

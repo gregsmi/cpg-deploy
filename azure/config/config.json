@@ -4,7 +4,7 @@
     ],
     "hail": {
         "domain": "azhailtest0.net",
-        "resource_group": "hailms01",
+        "resource_group": "hailms02",
         "cluster_name": "vdc"
     }
 }
