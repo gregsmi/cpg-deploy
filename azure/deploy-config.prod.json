@@ -1,9 +1,9 @@
 {
-    "analysis_runner_host": "https://arapi-azcpg001.azurewebsites.net/",
-    "analysis_runner_project": "azcpg001",
+    "analysis_runner_host": "https://arapi-azcpg003.azurewebsites.net/",
+    "analysis_runner_project": "azcpg003",
     "cloud": "azure",
-    "container_registry": "azcpg001acr.azurecr.io",
-    "sample_metadata_host": "https://smapi-azcpg001.azurewebsites.net/",
-    "sample_metadata_project": "azcpg001",
-    "web_url_template": "https://{namespace}-web-azcpg001.azurewebsites.net/{dataset}"
+    "container_registry": "azcpg003acr.azurecr.io",
+    "sample_metadata_host": "https://smapi-azcpg003.azurewebsites.net/",
+    "sample_metadata_project": "azcpg003",
+    "web_url_template": "https://{namespace}-web-azcpg003.azurewebsites.net/{dataset}"
 }
