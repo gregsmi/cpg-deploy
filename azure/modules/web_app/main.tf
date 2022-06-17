@@ -41,17 +41,16 @@ resource "azuread_application_password" "oauth2" {
   application_object_id = azuread_application.oauth2.object_id
 }
 
-resource "azurerm_app_service" "web_app" {
+resource "azurerm_linux_web_app" "web_app" {
   name                    = var.app_name
   location                = var.resource_group.location
   resource_group_name     = var.resource_group.name
-  app_service_plan_id     = var.app_service_plan_id
+  service_plan_id     = var.app_service_plan_id
   https_only              = true
   client_affinity_enabled = true
 
   site_config {
-    linux_fx_version                     = "DOCKER|${var.container_image}"
-    acr_use_managed_identity_credentials = true
+    container_registry_use_managed_identity = true
   }
 
   identity {
@@ -82,7 +81,7 @@ resource "azurerm_app_service" "web_app" {
 }
 
 resource "azurerm_app_service_virtual_network_swift_connection" "vnet_app_connection" {
-  app_service_id = azurerm_app_service.web_app.id
+  app_service_id = azurerm_linux_web_app.web_app.id
   subnet_id      = var.subnet_id
 }
 
@@ -91,11 +90,11 @@ resource "azurerm_role_assignment" "roles" {
 
   scope                = each.value.scope
   role_definition_name = each.value.role
-  principal_id         = azurerm_app_service.web_app.identity[0].principal_id
+  principal_id         = azurerm_linux_web_app.web_app.identity[0].principal_id
 }
 
 data "azurerm_monitor_diagnostic_categories" "all" {
-  resource_id = azurerm_app_service.web_app.id
+  resource_id = azurerm_linux_web_app.web_app.id
 }
 locals {
   diagnostic_categories_enabled = [
@@ -108,7 +107,7 @@ locals {
 
 resource "azurerm_monitor_diagnostic_setting" "app_diagnostics" {
   name                       = "app-diagnostics"
-  target_resource_id         = azurerm_app_service.web_app.id
+  target_resource_id         = azurerm_linux_web_app.web_app.id
   log_analytics_workspace_id = var.log_analytics_workspace_id
 
   # TF provider bug wants to re-apply settings every time unless they're all specified

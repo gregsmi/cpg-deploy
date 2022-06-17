@@ -64,10 +64,9 @@ module "sm_app" {
 
   app_name                   = local.smapi_app_name
   resource_group             = data.azurerm_resource_group.rg
-  app_service_plan_id        = azurerm_app_service_plan.appserviceplan.id
+  app_service_plan_id        = azurerm_service_plan.appserviceplan.id
   log_analytics_workspace_id = azurerm_log_analytics_workspace.la.id
   subnet_id                  = azurerm_subnet.app_subnet.id
-  container_image            = "${azurerm_container_registry.acr.login_server}/sample-metadata/server:latest"
   login_tenant               = data.azurerm_client_config.current.tenant_id
   app_settings = {
     # Azure known setting
@@ -88,10 +87,9 @@ module "ar_app" {
 
   app_name                   = local.arapi_app_name
   resource_group             = data.azurerm_resource_group.rg
-  app_service_plan_id        = azurerm_app_service_plan.appserviceplan.id
+  app_service_plan_id        = azurerm_service_plan.appserviceplan.id
   log_analytics_workspace_id = azurerm_log_analytics_workspace.la.id
   subnet_id                  = azurerm_subnet.app_subnet.id
-  container_image            = "${azurerm_container_registry.acr.login_server}/analysis-runner/images/server:latest"
   login_tenant               = data.azurerm_client_config.current.tenant_id
   app_settings = {
     # Azure known setting
@@ -113,10 +111,9 @@ module "arweb_apps" {
 
   app_name                   = "${each.key}-web-${var.deployment_name}"
   resource_group             = data.azurerm_resource_group.rg
-  app_service_plan_id        = azurerm_app_service_plan.appserviceplan.id
+  app_service_plan_id        = azurerm_service_plan.appserviceplan.id
   log_analytics_workspace_id = azurerm_log_analytics_workspace.la.id
   subnet_id                  = azurerm_subnet.app_subnet.id
-  container_image            = "${azurerm_container_registry.acr.login_server}/analysis-runner/web:latest"
   login_tenant               = data.azurerm_client_config.current.tenant_id
   app_settings = {
     # Azure known setting

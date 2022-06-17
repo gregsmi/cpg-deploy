@@ -11,11 +11,6 @@ variable "app_name" {
   type        = string
 }
 
-variable "container_image" {
-  description = "Fully-qualified container image for deployed app."
-  type        = string
-}
-
 variable "app_settings" {
   description = "Runtime environment variables for application."
   type        = map(any)

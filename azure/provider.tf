@@ -2,7 +2,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "=2.98.0"
+      version = "=3.9.0"
     }
     # Using azuread provider to create Apps/SPs requires Application 
     # Administrator role or Application.ReadWrite.All API perms
