@@ -154,7 +154,7 @@ make_tfvars() {
 
   # Write out new default tfvars file.
   cat << EOF > terraform.tfvars
-deployment_name     = "${deployment_name}"
+deployment_name = "${deployment_name}"
 EOF
 
   echo "Variable file terraform.tfvars created."
@@ -183,7 +183,7 @@ main() {
   read_deployment_vars
 
   local RESOURCE_GROUP_NAME="${DEPLOYMENT_NAME}-rg"
-  local STORAGE_ACCOUNT="${DEPLOYMENT_NAME}tfsa"
+  local STORAGE_ACCOUNT="${DEPLOYMENT_NAME}sa"
   local container_name="tfstate"
   local sa_access_key
 

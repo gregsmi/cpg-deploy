@@ -1,4 +1,5 @@
 .terraform*
+.database*
 out.plan
 
 # Byte-compiled / optimized / DLL files

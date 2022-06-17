@@ -152,7 +152,7 @@ module "datasets" {
 
 # Use main deployment storage account for config container.
 data "azurerm_storage_account" "main" {
-  name                = "${var.deployment_name}tfsa"
+  name                = "${var.deployment_name}sa"
   resource_group_name = data.azurerm_resource_group.rg.name
 }
 resource "azurerm_storage_container" "config" {
