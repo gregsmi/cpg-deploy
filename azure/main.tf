@@ -97,7 +97,6 @@ module "ar_app" {
     # App-specific settings
     "PORT"              = 8080
     "CPG_DEPLOY_CONFIG" = jsonencode(local.CPG_DEPLOY_CONFIG)
-    "DRIVER_IMAGE"      = "${azurerm_container_registry.acr.login_server}/analysis-runner/images/driver:latest"
   }
   role_assignments = [
     { role = "AcrPull", scope = azurerm_container_registry.acr.id },
