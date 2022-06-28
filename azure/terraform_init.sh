@@ -143,6 +143,41 @@ ensure_storage_container() {
 }
 
 #######################################
+# Ensure existence of a Key Vault in Azure.
+# Arguments:
+#   Name for the Key Vault.
+#   Name of the Resource Group.
+#   Azure location for the Key Vault.
+#   True to create Key Vault if it doesn't exist, otherwise error.
+#######################################
+ensure_key_vault() {
+  local key_vault_name="$1"
+  local resource_group_name="$2"
+  local location="$3"
+  local create_resources="$4"
+  local kv_exists
+
+  echo "Checking if key vault ${key_vault_name} exists..." 
+  # When a resource group doesn't exist, the `az group exists` command returns an authorization error.
+  kv_exists=$(az keyvault list -g ${resource_group_name} --query "[?name=='${key_vault_name}']"  | jq '. | length')
+  if [[ $? -ne 0 ]]; then
+    err "Failed to check for existence of key vault ${key_vault_name}. Probably a permissions issue."
+  fi
+
+  if [[ ${kv_exists} == 1 ]]; then
+    echo "Key vault ${key_vault_name} already exists."
+  elif [[ ${create_resources} == "true" ]]; then
+    echo "Key vault ${key_vault_name} does not exist - creating..."
+    1>/dev/null az keyvault create -n "${key_vault_name}" -g "${resource_group_name}" --location "${location}" --enable-rbac-authorization true
+    if [[ $? -ne 0 ]]; then
+      err "Failed to create key vault ${key_vault_name}"
+    fi
+  else
+    err "Key vault ${key_vault_name} doesn't exist (run with '-c' for first-time initialization)."
+  fi
+}
+
+#######################################
 # Create TFVARS file for use in Terraform operations  
 # Arguments:
 #   Name of the deployment
@@ -184,6 +219,7 @@ main() {
 
   local RESOURCE_GROUP_NAME="${DEPLOYMENT_NAME}-rg"
   local STORAGE_ACCOUNT="${DEPLOYMENT_NAME}sa"
+  local KEY_VAULT="${DEPLOYMENT_NAME}vault"
   local container_name="tfstate"
   local sa_access_key
 
@@ -197,6 +233,8 @@ main() {
   ensure_storage_account "${STORAGE_ACCOUNT}" "${RESOURCE_GROUP_NAME}" "${LOCATION}" ${create_resources}
   # Create "tfstate" container to store Terraform state if it doesn't exist.
   ensure_storage_container ${container_name} "${STORAGE_ACCOUNT}" ${create_resources}
+  # Create "tfstate" container to store Terraform state if it doesn't exist.
+  ensure_key_vault ${KEY_VAULT} "${RESOURCE_GROUP_NAME}" "${LOCATION}" ${create_resources}
   # Get an access key to the storage account for Terraform state. Use jq to grab the 
   # "value" field of the first key. "-r" option gives raw output without quotes.
   sa_access_key=$(az storage account keys list --resource-group "${RESOURCE_GROUP_NAME}" \

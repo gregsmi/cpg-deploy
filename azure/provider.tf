@@ -24,6 +24,9 @@ terraform {
 }
 
 provider "azuread" {
+  tenant_id     = "b7e69ef3-619e-4cb7-a4e5-80110816cdf7"
+  client_id     = "5f22a86b-27e6-4d8d-9abf-20616d741bf8"
+  client_secret = data.azurerm_key_vault_secret.deployment_sp_secret.value
 }
 
 provider "azurerm" {

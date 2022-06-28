@@ -78,7 +78,7 @@ module "sm_app" {
   }
   role_assignments = [
     { role = "AcrPull", scope = azurerm_container_registry.acr.id },
-    { role = "Key Vault Secrets User", scope = azurerm_key_vault.keyvault.id }
+    { role = "Key Vault Secrets User", scope = data.azurerm_key_vault.keyvault.id }
   ]
 }
 
@@ -100,7 +100,7 @@ module "ar_app" {
   }
   role_assignments = [
     { role = "AcrPull", scope = azurerm_container_registry.acr.id },
-    { role = "Key Vault Secrets User", scope = azurerm_key_vault.keyvault.id }
+    { role = "Key Vault Secrets User", scope = data.azurerm_key_vault.keyvault.id }
   ]
 }
 
@@ -124,7 +124,7 @@ module "arweb_apps" {
   }
   role_assignments = [
     { role = "AcrPull", scope = azurerm_container_registry.acr.id },
-    { role = "Key Vault Secrets User", scope = azurerm_key_vault.keyvault.id }
+    { role = "Key Vault Secrets User", scope = data.azurerm_key_vault.keyvault.id }
   ]
 }
 
