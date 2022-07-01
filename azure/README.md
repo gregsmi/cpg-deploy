@@ -12,7 +12,7 @@ Organization-specific configuration files will be pushed to your source reposito
 1. Fork [gregsmi/sample-metadata](https://github.com/gregsmi/sample-metadata)
 1. Fork [gregsmi/analysis-runner](https://github.com/gregsmi/analysis-runner)
 
-For clarity, the forked repos will be referred below with the `-fork` suffix, e.g.,your-organization/cpg-deploy-fork. You should choose a suffix (or not) that's appropriate to your application.
+For clarity, the forked repos will be referred below with the `-fork` suffix, e.g., `your-organization/cpg-deploy-fork`. You should choose a suffix (or not) that's appropriate to your application.
 
 ### Pre-existing Hail Batch on Azure deployment
 
@@ -96,7 +96,7 @@ on linux_amd64
 
 ## Infrastructure deployment
 
-### Clone cpg-deploy-fork repository
+### Clone `cpg-deploy-fork` repository
 
 Clone the repository that contains the terraform configuration to deploy the CPG infrastructure.
 
@@ -106,9 +106,9 @@ mkdir repos && cd repos
 git clone https://github.com/organization/cpg-deploy-fork
 ```
 
-Note: replace organization/cpg-deploy-fork in the example above with the path to your fork of the cpg-deploy repository.
+Note: replace `organization/cpg-deploy-fork` in the example above with the path to your fork of the cpg-deploy repository.
 
-### Clone sample-metadata-fork repository
+### Clone `sample-metadata-fork` repository
 
 Clone the repository that contains the source for the Sample Metadata server.
 
@@ -117,9 +117,9 @@ cd ~/repos
 git clone https://github.com/organization/sample-metadata-fork
 ```
 
-Note: replace organization/sample-metadata-fork in the example above with the path to your fork of the sample-metadata repository.
+Note: replace `organization/sample-metadata-fork` in the example above with the path to your fork of the sample-metadata repository.
 
-### Clone analysis-runner-fork repository
+### Clone `analysis-runner-fork` repository
 
 Clone the repository that contains the source for the Analysis Runner server.
 
@@ -128,7 +128,7 @@ cd ~/repos
 git clone https://github.com/organization/analysis-runner-fork
 ```
 
-Note: replace organization/analysis-runner-fork in the example above with the path to your fork of the analysis-runner repository.
+Note: replace `organization/analysis-runner-fork` in the example above with the path to your fork of the analysis-runner repository.
 
 ### Get deployment details
 
@@ -148,9 +148,9 @@ Note: some users can use `az login` to access multiple tenants, in this case use
 
 ### Populate configuration files
 
-Infrastructure deployment is configured with a few text files contained within the cpg-deploy-fork repository.
+Infrastructure deployment is configured with a few text files contained within the `cpg-deploy-fork` repository.
 
-Note: the working directory organization/cpg-deploy-fork/azure is assumed for the following steps.
+Note: the working directory `organization/cpg-deploy-fork/azure` is assumed for the following steps.
 
 First, populate `deployment.env`
 
@@ -201,7 +201,7 @@ Lastly, in the `config` subdirectory you will create one or more dataset-specifi
 
 ### Commit deployment details to source control
 
-Multiple files will now be updated with deployment specific settings. To allow others to manage your deployment, or to manage your deployment from other machines, you'll want to commit these configuration changes to your fork of the cpg-deploy-fork repository.
+Multiple files will now be updated with deployment specific settings. To allow others to manage your deployment, or to manage your deployment from other machines, you'll want to commit these configuration changes to your fork of the `cpg-deploy-fork` repository.
 
 ```bash
 git add deployment.env config/config.json deploy-config.prod.json
@@ -260,7 +260,7 @@ git push origin
    1. Under the "Name" field type `AZURE_CREDENTIALS`
    1. Under the "Value" field enter the output of the command `terraform output --json AZURE_CREDENTIALS`
    1. Click "Add Secret"
-1. Update deployment configuration (must be executed from sample-metadata-fork/)
+1. Update deployment configuration (must be executed from `sample-metadata-fork/`)
 
    ```bash
    cp ../cpg-deploy-fork/azure/deploy-config.prod.json .
@@ -270,33 +270,52 @@ git push origin
    ```
 
 1. Kick off server deployment
-   1. Enable workflows on forked repository
+   - Enable workflows on forked repository
       1. Navigate to the github page for your forked sample-metadata repository
       1. Click "Actions"
       1. Click "I understand my workflows, go ahead and enable them"
-   1. Run Azure Deploy Workflow
+   - Run Azure Deploy Workflow
       1. Navigate to the github page for your forked sample-metadata repository
       1. Click "Actions"
       1. Click "Azure Deploy" under the list of workflows
       1. Click the "Run workflow" drop down menu
-      1. Select the "dev" branch and click the "Run workflow button"
+      1. Select the "main" branch and click the "Run workflow" button
       1. The deployment record will run for a few minutes, and will eventually be annotated with a green check-mark if deployment was successful.
 1. Test successful deployment
-   1. Get the sample-medata webhost FQDN by running the following command from cpg-deploy-fork/azure
+   1. Get the sample-medata webhost FQDN by running the following command from `cpg-deploy-fork/azure`
 
    ```bash
    terraform output --json CPG_DEPLOY_CONFIG | jq -r '.sample_metadata_host'
    ```
 
-   1. Visit `{.sample_metadata_host}/api/v1/project/all`. This should return "[]" as there are no projects in the sample-metadata server yet. To visit this page you will have to authenticate via your browser and potentially consent to app permissions for the Sample Metadata server.
+   1. Visit `<sample_metadata_host>/api/v1/project/all`. This should return "[]" as there are no projects in the sample-metadata server yet. To visit this page you will have to authenticate via your browser and potentially consent to app permissions for the Sample Metadata server.
 
 ### Deploy Analysis Runner server
 
-The initial steps for deploying the Analysis Runner server are the same as the above deployment of the Sample Metadata server, except all operations are carried out in the context of the forked analysis runner repository.
+The initial steps for deploying the Analysis Runner server are the same as the above deployment of the Sample Metadata server, except all operations are carried out in the context of the forked analysis runner repository. There is an an additional step to manually build the base driver image before deploying the server.
 
 1. Configure GitHub deployment secret
 1. Update deployment configuration
+1. From within `analysis-runner-fork/driver`:
+   ```shell
+   DOCKER_IMAGE="$(jq -r .container_registry ../deploy-config.prod.json)/analysis-runner/images/driver-base:1.2"
+   docker build -f Dockerfile.base --tag=$DOCKER_IMAGE . && docker push $DOCKER_IMAGE
+   ```
 1. Kick off server deployment
+   - Enable workflows on forked repository
+      1. Navigate to the github page for your forked analysis-runner repository
+      1. Click "Actions"
+      1. Click "I understand my workflows, go ahead and enable them"
+   - Run Azure Deploy Workflows
+      1. Navigate to the github page for your forked analysis-runner repository
+      1. Click "Actions"
+      1. Click "Azure Deploy" under the list of workflows
+      1. Click the "Run workflow" drop down menu
+      1. Select the "main" branch and click the "Run workflow" button
+      1. Then click "Azure Web Deploy" under the list of workflows
+      1. Click the "Run workflow" drop down menu
+      1. Select the "main" branch and click the "Run workflow" button
+      1. The deployment records will run for a few minutes, and will eventually be annotated with a green check-mark if deployment was successful.
 
 Testing successful deployment of the Analysis Runner server can be done by TODO
 
@@ -308,9 +327,9 @@ TODO
 
 If the deployment VM is still available.
 
-1. Navigate to cpg-deploy-fork/azure/
+1. Navigate to `cpg-deploy-fork/azure/`
 1. `terraform destroy`. After confirmation, deletion of resources should take approximately 3 minutes
-1. Remove the github secrets from the sample-metadata-fork and analysis-runner-fork repositories
+1. Remove the github secrets from the `sample-metadata-fork` and `analysis-runner-fork` repositories
 
 If the deployment machine is no longer available
 
@@ -324,7 +343,7 @@ If the deployment machine is no longer available
    ```
 
 1. `terraform destroy`. After confirmation, deletion of resources should take approximately 3 minutes
-1. Remove the github secrets from the sample-metadata-fork and analysis-runner-fork repositories
+1. Remove the github secrets from the `sample-metadata-fork` and `analysis-runner-fork` repositories
 
 If you wish to remove the storage account where the terraform state is stored, and the resource group that houses it, run the following
 
