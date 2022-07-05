@@ -1,0 +1,15 @@
+{
+    "name" : "fewgenomes",
+    "project_id" : "fewgen0001",
+    "region" : "eastus",
+    "access_accounts": {
+        "test":[],
+        "standard":[],
+        "full":["full_user_upn"],
+        "access":["access_user_upn"],
+        "web-access":[]
+    },
+    "allowed_repos": [
+        "gregsmi/fewgenomes"
+    ]
+}
