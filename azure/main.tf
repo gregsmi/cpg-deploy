@@ -132,7 +132,10 @@ module "datasets" {
   source   = "./modules/dataset"
   for_each = fileset(path.module, "config/*.ds.json")
 
+  definition = jsondecode(file(each.key))
   tenant_id = data.azurerm_client_config.current.tenant_id
+  acr_id    = azurerm_container_registry.acr.id
+
   group_readers = [
     module.sm_app.principal_id,
     module.ar_app.principal_id,
@@ -143,7 +146,6 @@ module "datasets" {
     { bucket = "main-web", principal = module.arweb_apps["main"].principal_id },
     { bucket = "test-web", principal = module.arweb_apps["test"].principal_id }
   ]
-  definition = jsondecode(file(each.key))
 }
 
 # Use main deployment storage account for config container.
@@ -152,7 +154,7 @@ data "azurerm_storage_account" "main" {
   resource_group_name = data.azurerm_resource_group.rg.name
 }
 resource "azurerm_storage_container" "config" {
-  name                  = "config"
+  name                  = "cpg-config"
   storage_account_name  = data.azurerm_storage_account.main.name
   container_access_type = "private"
 }

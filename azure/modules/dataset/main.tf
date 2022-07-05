@@ -34,6 +34,15 @@ resource "azurerm_key_vault" "keyvault" {
   sku_name                  = "standard"
 }
 
+# Allow Hail SA's to pull driver images.
+resource "azurerm_role_assignment" "hail_acr_role" {
+  for_each = local.hail_accounts
+
+  scope                = var.acr_id
+  role_definition_name = "AcrPull"
+  principal_id         = each.value.objectId
+}
+
 # TF secret creation fails unless TF user is assigned Key Vault Secrets Officer role.
 resource "azurerm_role_assignment" "key_adding" {
   scope                = azurerm_key_vault.keyvault.id

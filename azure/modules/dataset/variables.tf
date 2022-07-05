@@ -9,6 +9,11 @@ variable "group_readers" {
   default     = []
 }
 
+variable "acr_id" {
+  description = "Principal ID for ACR that Hail Batch principals need to be able to pull images from."
+  type        = string
+}
+
 variable "storage_readers" {
   description = "List of service principals that should have access to read particular buckets in this dataset."
   type = list(object({
