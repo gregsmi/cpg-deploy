@@ -1,10 +1,10 @@
 # Deployment instructions for CPG infrastructure on Azure
 
-The following instructions are intended for the deployment of the Sample Metadata Server, Analysis Runner, and associated datsets (TODO links).
+The following instructions are intended for the deployment of the Sample Metadata Server, Analysis Runner, and associated datsets.
 
-## Global pre-requisites
+# Global prerequisites
 
-### Fork necessary repositories
+## Fork necessary repositories
 
 Organization-specific configuration files will be pushed to your source repository and github actions will be configured specifically for your organization's infrastructure, so the first deployment step is to fork necessary source repositories.
 
@@ -14,7 +14,7 @@ Organization-specific configuration files will be pushed to your source reposito
 
 For clarity, the forked repos will be referred below with the `-fork` suffix, e.g., `your-organization/cpg-deploy-fork`. You should choose a suffix (or not) that's appropriate to your application.
 
-### Pre-existing Hail Batch on Azure deployment
+## Deploy Hail Batch on Azure
 
 Following the instructions [here](https://github.com/hail-is/hail/tree/main/infra/azure), deploy Hail Batch in your Azure subscription.
 
@@ -25,26 +25,26 @@ Collect the following information about your Hail Batch deployment
 - the hail-internal cluster name for your instance (typically `vdc`)
 - the Azure region in which your Hail Batch instance is deployed
 
-### Assign RBAC roles
+## Assign RBAC roles
 
 In order to deploy the CPG infrastructure you will need both tenant-level roles and subscription-level roles granted for your identity. Though the following roles are a little broader than is strictly necessary, make sure you have the `Global Administrator` Azure Active Directory (AAD) role and the `Owner` role for the subscription in which you intend to deploy resources. TODO switch to minimum level permissions required.
 
 See the following links for how to [AAD roles](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-users-assign-role-azure-portal) and [subscription roles](https://docs.microsoft.com/en-us/azure/role-based-access-control/role-assignments-portal-subscription-admin) using Azure Portal.
 
-## Deployment machine pre-requisites
+# Deployment machine prerequisites
 
 You may want to perform the following deployment steps from an Azure VM in the same region as you wish to deploy your infrastructure. [These instructions](https://docs.microsoft.com/en-us/azure/virtual-machines/windows/quick-create-portal) can help you deploy an Azure VM. Note the public IP address of your VM for later steps.
 
 The following instructions have been tested on a Linux VM running Ubuntu 20.04 and Windows Subsystem for Linux hosting Ubuntu 18.04.
 
-### Update and install base utilities
+## Update and install base utilities
 
 ```bash
 sudo apt-get update
 sudo apt-get install jq default-jre
 ```
 
-### Install Azure CLI
+## Install Azure CLI
 
 Install the Azure CLI following the instructions [here](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt). For our test VM, running Ubuntu 20.04, this is done as follows:
 
@@ -71,7 +71,7 @@ msal                            1.18.0b1
 azure-mgmt-resource             21.1.0b1
 ```
 
-### Install Terraform
+## Install Terraform
 
 Install the Terraform utility following the instructions [here](https://www.terraform.io/downloads). In short, perform the following
 
@@ -94,9 +94,9 @@ Terraform v1.2.3
 on linux_amd64
 ```
 
-## Infrastructure deployment
+# Infrastructure deployment
 
-### Clone `cpg-deploy-fork` repository
+## Clone `cpg-deploy-fork` repository
 
 Clone the repository that contains the terraform configuration to deploy the CPG infrastructure.
 
@@ -108,7 +108,7 @@ git clone https://github.com/organization/cpg-deploy-fork
 
 Note: replace `organization/cpg-deploy-fork` in the example above with the path to your fork of the cpg-deploy repository.
 
-### Clone `sample-metadata-fork` repository
+## Clone `sample-metadata-fork` repository
 
 Clone the repository that contains the source for the Sample Metadata server.
 
@@ -119,7 +119,7 @@ git clone https://github.com/organization/sample-metadata-fork
 
 Note: replace `organization/sample-metadata-fork` in the example above with the path to your fork of the sample-metadata repository.
 
-### Clone `analysis-runner-fork` repository
+## Clone `analysis-runner-fork` repository
 
 Clone the repository that contains the source for the Analysis Runner server.
 
@@ -130,7 +130,7 @@ git clone https://github.com/organization/analysis-runner-fork
 
 Note: replace `organization/analysis-runner-fork` in the example above with the path to your fork of the analysis-runner repository.
 
-### Get deployment details
+## Get deployment details
 
 Obtain tenant and subscription GUIDs.
 
@@ -146,11 +146,11 @@ The value associated with `id` is your subscription GUID.
 
 Note: some users can use `az login` to access multiple tenants, in this case use `az login --use-device-code -t <your tenant>` to login. You should also verify the UPN of your identity either through Azure portal or by searching for your guest identity in `az ad signed-in-user show --query "userPrincipalName"`.
 
-### Populate configuration files
+## Populate configuration files
 
 Infrastructure deployment is configured with a few text files contained within the `cpg-deploy-fork` repository.
 
-Note: the working directory `organization/cpg-deploy-fork/azure` is assumed for the following steps.
+Note: the working directory `cpg-deploy-fork/azure` is assumed for the following steps.
 
 First, populate `deployment.env`
 
@@ -163,20 +163,14 @@ First, populate `deployment.env`
 
 Next, populate `config/config.json`. This is a JSON object that contains configuration information about administrators and datasets for your deployment.
 
-1. `administrators` is a list of strings that designate deployment administrators (TODO: detail on permissions). Administrators should be designated by listing the User Principal Name (UPN) associated with the user's identity in Azure Active Directory.
+1. `administrators` is a list of strings that designate deployment administrators (right now, this simply adds designated principals to the internal `project-creator-users` list). Administrators should be designated by listing the User Principal Name (UPN) associated with the user's identity in Azure Active Directory.
    - To obtain the UPN for the user currently logged in via `az login` execute `az ad signed-in-user show --query "userPrincipalName"`
    - To obtain a list of UPNs for all users in the tenant execute `az ad user list --query "[].userPrincipalName"` (This can produce many results if your tenant is large).
 1. The `hail` JSON object contains configuration for the previously deployed Hail Batch cluster listed as a prerequisite. `domain`, `resource_group`, and `cluster_name` should be the same details you previously collected about your Hail Batch deployment.
 
-Lastly, in the `config` subdirectory you will create one or more dataset-specific JSON files following the format outlined in `dataset.json.example`. Note that dataset infrastructure can easily be added later via subsequent calls of `terraform apply`.
+Initially the deployment contains no datasets - dataset deployment is discussed later under [Configuring and deploying datasets](#configuring-and-deploying-datasets).
 
-1. `name` should be a lowercase, alphabetic string between 8 and 16 characters. It is not required to be unique across Azure, but should be unique within your infrastructure deployment.
-1. `project_id` should be a lowercase alphabetic / numeric string between 8 and 16 characters. It should be unique across Azure and will be used as a root for deployed resources specific to this dataset.
-1. `region` should match the region specified in `deployment.env`
-1. `access_accounts` will be a list of UPNs for users who should be granted different access levels. AAD group names are also allowed, but will be expanded to their membership list at the time of deployment and will not update with subsequent additions to the group.
-1. `allowed_repos` is a list of github repositories from which code can be run against the data in this dataset.
-
-### Terraform deployment
+## Terraform deployment
 
 1. Initialize Terraform using the `terraform_init.sh` shell script. This script performs a number of operations
    - Ensures that you are logged into the correct Azure tenant (and attempts to log you in if not)
@@ -199,7 +193,7 @@ Lastly, in the `config` subdirectory you will create one or more dataset-specifi
 
    enter 'yes' when prompted to proceed with deployment. Go get a cup of coffee.
 
-### Commit deployment details to source control
+## Commit deployment details to source control
 
 Multiple files will now be updated with deployment specific settings. To allow others to manage your deployment, or to manage your deployment from other machines, you'll want to commit these configuration changes to your fork of the `cpg-deploy-fork` repository.
 
@@ -209,9 +203,9 @@ git commit -m "configured deployment"
 git push origin
 ```
 
-## Post-deployment configuration
+# Post-deployment configuration
 
-### Update Sample Metadata server database schema
+## Update Sample Metadata server database schema
 
 1. `mkdir .database`
 1. Get liquibase
@@ -251,7 +245,7 @@ git push origin
    1. Under the "Settings" group in the left-hand navigation pane, click "Connection security"
    1. Change the "Deny public network access" selection to "Yes" and click "Save"
 
-### Deploy Sample Metadata server
+## Deploy Sample Metadata server
 
 1. Configure GitHub deployment secret
    1. Navigate to the github page for your forked sample-metadata repository
@@ -290,7 +284,7 @@ git push origin
 
    1. Visit `<sample_metadata_host>/api/v1/project/all`. This should return "[]" as there are no projects in the sample-metadata server yet. To visit this page you will have to authenticate via your browser and potentially consent to app permissions for the Sample Metadata server.
 
-### Deploy Analysis Runner server
+## Deploy Analysis Runner server
 
 The initial steps for deploying the Analysis Runner server are the same as the above deployment of the Sample Metadata server, except all operations are carried out in the context of the forked analysis runner repository. There is an an additional step to manually build the base driver image before deploying the server.
 
@@ -319,11 +313,7 @@ The initial steps for deploying the Analysis Runner server are the same as the a
 
 Testing successful deployment of the Analysis Runner server can be done by TODO
 
-## Configuring and deploying datasets
-
-TODO
-
-## Tearing Down a deployment
+# Tearing Down a deployment
 
 If the deployment VM is still available.
 
@@ -333,7 +323,7 @@ If the deployment VM is still available.
 
 If the deployment machine is no longer available
 
-1. Configure a new deployment machine with the pre-requisites described [above](#deployment-machine-pre-requisites)
+1. Configure a new deployment machine with the pre-requisites described under [Deployment machine pre-requisites](#deployment-machine-pre-requisites)
 1. Clone the cpg-deploy-fork repository
 1. Run the following to re-initialize a local client to existing terraform state
 
