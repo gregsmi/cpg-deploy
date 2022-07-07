@@ -129,13 +129,15 @@ module "arweb_apps" {
 }
 
 module "datasets" {
-  source   = "./modules/dataset"
-  for_each = fileset(path.module, "config/*.ds.json")
-
+  source     = "./modules/dataset"
+  for_each   = fileset(path.module, "config/*.ds.json")
   definition = jsondecode(file(each.key))
-  tenant_id = data.azurerm_client_config.current.tenant_id
-  acr_id    = azurerm_container_registry.acr.id
 
+  deployment_ids = {
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    acr_id    = azurerm_container_registry.acr.id
+    vault_id  = azurerm_key_vault.keyvault.id
+  }
   group_readers = [
     module.sm_app.principal_id,
     module.ar_app.principal_id,

@@ -1,17 +1,16 @@
-variable "tenant_id" {
-  description = "Tenant this dataset should reside in."
-  type        = string
+variable "deployment_ids" {
+  description = "List of deployment-level principals for permissions."
+  type = object({
+    tenant_id = string # Tenant this dataset should reside in.
+    acr_id    = string # Principal ID for ACR that Hail Batch principals need to be able to pull images from.
+    vault_id  = string # Principal ID for Key Vault that Hail Batch principals need to be able to read secrets from.
+  })
 }
 
 variable "group_readers" {
   description = "List of service principals that should have access to group membership for this dataset."
   type        = list(string)
   default     = []
-}
-
-variable "acr_id" {
-  description = "Principal ID for ACR that Hail Batch principals need to be able to pull images from."
-  type        = string
 }
 
 variable "storage_readers" {

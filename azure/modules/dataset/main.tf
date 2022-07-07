@@ -29,7 +29,7 @@ resource "azurerm_key_vault" "keyvault" {
   name                      = "${var.definition.project_id}vault"
   resource_group_name       = azurerm_resource_group.rg.name
   location                  = azurerm_resource_group.rg.location
-  tenant_id                 = var.tenant_id
+  tenant_id                 = var.deployment_ids.tenant_id
   enable_rbac_authorization = true
   sku_name                  = "standard"
 }
@@ -38,8 +38,17 @@ resource "azurerm_key_vault" "keyvault" {
 resource "azurerm_role_assignment" "hail_acr_role" {
   for_each = local.hail_accounts
 
-  scope                = var.acr_id
+  scope                = var.deployment_ids.acr_id
   role_definition_name = "AcrPull"
+  principal_id         = each.value.objectId
+}
+
+# Allow Hail SA's to read secrets.
+resource "azurerm_role_assignment" "hail_vault_role" {
+  for_each = local.hail_accounts
+
+  scope                = var.deployment_ids.vault_id
+  role_definition_name = "Key Vault Secrets User"
   principal_id         = each.value.objectId
 }
 
