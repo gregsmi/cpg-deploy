@@ -12,7 +12,7 @@ locals {
   dataset_permissions = {
     test       = concat(var.definition.access_accounts.test, [local.hail_accounts.test.appId])
     standard   = concat(var.definition.access_accounts.standard, [local.hail_accounts.standard.appId])
-    full       = concat(var.definition.access_accounts.full, [local.hail_accounts.full.appId])
+    full       = concat(var.definition.access_accounts.full, [local.hail_accounts.full.appId, var.deployment_ids.web_app_id])
     web-access = concat(var.definition.access_accounts.access, var.definition.access_accounts.web-access)
     access     = var.definition.access_accounts.access
   }

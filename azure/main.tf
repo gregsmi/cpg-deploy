@@ -135,9 +135,10 @@ module "datasets" {
   definition = jsondecode(file(each.key))
 
   deployment_ids = {
-    tenant_id = data.azurerm_client_config.current.tenant_id
-    acr_id    = azurerm_container_registry.acr.id
-    vault_id  = azurerm_key_vault.keyvault.id
+    tenant_id  = data.azurerm_client_config.current.tenant_id
+    acr_id     = azurerm_container_registry.acr.id
+    vault_id   = azurerm_key_vault.keyvault.id
+    web_app_id = module.ar_app.client_id
   }
   group_readers = [
     module.sm_app.principal_id,

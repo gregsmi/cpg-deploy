@@ -93,6 +93,10 @@ resource "azurerm_role_assignment" "roles" {
   principal_id         = azurerm_linux_web_app.web_app.identity[0].principal_id
 }
 
+data "azuread_service_principal" "sp" {
+  object_id = azurerm_linux_web_app.web_app.identity[0].principal_id
+}
+
 data "azurerm_monitor_diagnostic_categories" "all" {
   resource_id = azurerm_linux_web_app.web_app.id
 }

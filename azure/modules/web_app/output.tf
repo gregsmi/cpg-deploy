@@ -10,3 +10,6 @@ output "name" {
 output "principal_id" {
   value = azurerm_linux_web_app.web_app.identity[0].principal_id
 }
+output "client_id" {
+  value = data.azuread_service_principal.sp.application_id
+}

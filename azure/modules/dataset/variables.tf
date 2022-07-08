@@ -1,9 +1,10 @@
 variable "deployment_ids" {
   description = "List of deployment-level principals for permissions."
   type = object({
-    tenant_id = string # Tenant this dataset should reside in.
-    acr_id    = string # Principal ID for ACR that Hail Batch principals need to be able to pull images from.
-    vault_id  = string # Principal ID for Key Vault that Hail Batch principals need to be able to read secrets from.
+    tenant_id  = string # Tenant this dataset should reside in.
+    acr_id     = string # Principal ID for ACR that Hail Batch principals need to be able to pull images from.
+    vault_id   = string # Principal ID for Key Vault that Hail Batch principals need to be able to read secrets from.
+    web_app_id = string # Client ID for web app that needs access to dataset storage.
   })
 }
 
