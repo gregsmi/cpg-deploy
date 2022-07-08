@@ -100,7 +100,8 @@ module "ar_app" {
   }
   role_assignments = [
     { role = "AcrPull", scope = azurerm_container_registry.acr.id },
-    { role = "Key Vault Secrets User", scope = azurerm_key_vault.keyvault.id }
+    { role = "Key Vault Secrets User", scope = azurerm_key_vault.keyvault.id },
+    { role = "Storage Blob Data Contributor", scope = azurerm_storage_container.config.resource_manager_id }
   ]
 }
 
