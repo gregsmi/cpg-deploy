@@ -58,7 +58,7 @@ Verify the installation was successful
 az --version
 ```
 
-The output of this command should begin with something like
+The output of this command should begin with something like:
 
 ```text
 azure-cli                         2.37.0
@@ -96,63 +96,43 @@ on linux_amd64
 
 # Infrastructure deployment
 
-## Clone `cpg-deploy-fork` repository
+## Clone deployment repositories
 
-Clone the repository that contains the terraform configuration to deploy the CPG infrastructure.
+Clone the three forked repositories from the [Fork necessary repositories](#fork-necessary-repositories) step that contain the root terraform configuration, the Sample Metadata server, and the Analysis Runner server (`cpg-deploy`, `sample-metadata`, and  `analysis-runner`, respectively).
+
+_Note: replace each `organization/<repo>-fork` below with the path to your fork of the corresponding repository. It is assumed in a later step that these repo directories share a common parent directory._
 
 ```bash
 cd ~
 mkdir repos && cd repos
 git clone https://github.com/organization/cpg-deploy-fork
-```
-
-Note: replace `organization/cpg-deploy-fork` in the example above with the path to your fork of the cpg-deploy repository.
-
-## Clone `sample-metadata-fork` repository
-
-Clone the repository that contains the source for the Sample Metadata server.
-
-```bash
-cd ~/repos
 git clone https://github.com/organization/sample-metadata-fork
-```
-
-Note: replace `organization/sample-metadata-fork` in the example above with the path to your fork of the sample-metadata repository.
-
-## Clone `analysis-runner-fork` repository
-
-Clone the repository that contains the source for the Analysis Runner server.
-
-```bash
-cd ~/repos
 git clone https://github.com/organization/analysis-runner-fork
 ```
-
-Note: replace `organization/analysis-runner-fork` in the example above with the path to your fork of the analysis-runner repository.
 
 ## Get deployment details
 
 Obtain tenant and subscription GUIDs.
+
+_Note: replace `<deployment subscription>` with the name of the subscription in which you wish to deploy infrastructure, surrounded by double quotes._
 
 ```bash
 az login --use-device-code
 az account show -s "<deployment subscription>"
 ```
 
-In this case `"<deployment subscription>"` should be replaced with the name of the subscription in which you wish to deploy infrastructure, surrounded by double quotes.
-
-The value associated with `homeTenantID` is your tenant GUID.
+The value associated with `homeTenantID` is your tenant GUID.  
 The value associated with `id` is your subscription GUID.
 
-Note: some users can use `az login` to access multiple tenants, in this case use `az login --use-device-code -t <your tenant>` to login. You should also verify the UPN of your identity either through Azure portal or by searching for your guest identity in `az ad signed-in-user show --query "userPrincipalName"`.
+Some users can use `az login` to access multiple tenants; in this case use `az login --use-device-code -t <your tenant>` to login. You should also verify the UPN of your identity either through Azure portal or by searching for your guest identity in `az ad signed-in-user show --query "userPrincipalName"`.
 
 ## Populate configuration files
 
 Infrastructure deployment is configured with a few text files contained within the `cpg-deploy-fork` repository.
 
-Note: the working directory `cpg-deploy-fork/azure` is assumed for the following steps.
+_Note: use working directory `cpg-deploy-fork/azure` for the following steps._
 
-First, populate `deployment.env`
+First, populate `deployment.env`:
 
 1. `cp example.env deployment.env`
 1. replace the template values in `deployment.env` with appropriate values for your deployment
@@ -168,14 +148,15 @@ Next, populate `config/config.json`. This is a JSON object that contains configu
    - To obtain a list of UPNs for all users in the tenant execute `az ad user list --query "[].userPrincipalName"` (This can produce many results if your tenant is large).
 1. The `hail` JSON object contains configuration for the previously deployed Hail Batch cluster listed as a prerequisite. `domain`, `resource_group`, and `cluster_name` should be the same details you previously collected about your Hail Batch deployment.
 
-Initially the deployment contains no datasets - dataset deployment is discussed later under [Configuring and deploying datasets](#configuring-and-deploying-datasets).
+Initially the deployment contains no datasets - dataset deployment is described at [Configuring and deploying datasets](./config/README.md).
 
 ## Terraform deployment
 
-1. Initialize Terraform using the `terraform_init.sh` shell script. This script performs a number of operations
+1. Initialize Terraform using the `terraform_init.sh` shell script. This script performs a number of operations:
+   - Reads `deployment.env` to determine the correct account and resource names for the current deployment 
    - Ensures that you are logged into the correct Azure tenant (and attempts to log you in if not)
-   - Creates a resource group, storage account, and container within that account to hold terraform state
-   - Initializes Terraform using the newly created storage account and container to contain backend state
+   - Creates a resource group, a storage account, and a container within that account
+   - Initializes Terraform using the newly-created storage account and container to contain centralized backend state
    - Creates a file `terraform.tfvars` that contains deployment-specific variables
 
    ```bash
@@ -183,15 +164,15 @@ Initially the deployment contains no datasets - dataset deployment is discussed 
    ./terraform_init.sh -c
    ```
 
-   Note: `terraform_init.sh` can be run without the `-c` argument at any time to initialize a new local client for an existing deployment. This is useful if you want to manage an existing deployment from a new machine.
+   The `-c` argument for `terraform_init.sh` is used only for first-time initialization of a new deployment, and it tells the script to create any of the root resources that don't yet exist. The script can be run without the `-c` argument at any time to ensure the root resources and the local client are all up to date, and to initialize a new local client if you want to manage an existing deployment from a new machine.
 
-2. Apply the terraform configuration
+2. Apply the terraform configuration:
 
    ```bash
    terraform apply
    ```
 
-   enter 'yes' when prompted to proceed with deployment. Go get a cup of coffee.
+   Enter 'yes' when prompted to proceed with deployment. Go get a cup of coffee.
 
 ## Commit deployment details to source control
 
@@ -205,8 +186,9 @@ git push origin
 
 # Post-deployment configuration
 
-## Update Sample Metadata server database schema
+## Update Sample Metadata database
 
+The following process is used to update the MariaDB database schema to the latest schema defined in the `sample-metadata-fork` repo. It should be performed on initial deployment (when the database is blank), and again anytime the schema in `sample-metadata-fork/db/project.xml` changes.
 1. `mkdir .database`
 1. Get liquibase
 
@@ -215,23 +197,23 @@ git push origin
    tar -xvf .database/liquibase-4.7.0.tar.gz -C .database/
    ```
 
-1. Get the MariaDB JDBC driver
+1. Get the MariaDB JDBC driver:
 
    ```bash
    wget -P .database https://repo1.maven.org/maven2/org/mariadb/jdbc/mariadb-java-client/2.7.2/mariadb-java-client-2.7.2.jar
    ```
 
-1. Enable local client access to the MariaDB server
+1. Enable local client access to the MariaDB server:
    1. In [Azure Portal](https://portal.azure.com) locate the resource group and database server for your deployment. The resource group can be found by running `terraform output -json CPG_DEPLOY_CONFIG | jq ".sample_metadata_project"`. The database server will be contained within a resource group with that prefix. The server itself will be prefixed with `sm-db`
    1. Under the "Settings" group in the left-hand navigation pane, click "Connection security"
    1. Change the "Deny public network access" selection to "No" and click "Save"
    1. Add a firewall rule allowing access from your local deployment host and click "Save" again. If you opted to deploy the CPG infrastructure from a VM, you will need to obtain the VMs public IP address from the Azure portal, not by using a Linux command like `ip addr show`
-1. Run Liquibase update
-   Note: replace `../../sample-metadata` below with a path to your local clone of your forked sample-metadata repository.
+1. Run Liquibase update:  
+   _Note: replace `../../sample-metadata-fork` below with a path to your local clone of your forked sample-metadata repository if it does not share a parent directory with the `cpg-deploy-fork` repo._
 
    ```bash
    .database/liquibase \
-       --changeLogFile ../../sample-metadata/db/project.xml \
+       --changeLogFile ../../sample-metadata-fork/db/project.xml \
        --url jdbc:mariadb://$(terraform output --raw sample_metadata_dbserver)/sm_production \
        --driver org.mariadb.jdbc.Driver \
        --classpath .database/mariadb-java-client-2.7.2.jar \
@@ -249,11 +231,12 @@ git push origin
 
 1. Configure GitHub deployment secret
    1. Navigate to the github page for your forked sample-metadata repository
-   1. Click "Settings" -> "Secrets" -> "Actions"
+   1. Click "Settings" &rarr; "Secrets" &rarr; "Actions"
    1. Click "New Repository Secret"
    1. Under the "Name" field type `AZURE_CREDENTIALS`
    1. Under the "Value" field enter the output of the command `terraform output --json AZURE_CREDENTIALS`
-   1. Click "Add Secret"
+   1. Click "Add Secret"  
+   TODO: PyPi configuration
 1. Update deployment configuration (must be executed from `sample-metadata-fork/`)
 
    ```bash
@@ -263,18 +246,14 @@ git push origin
    git push origin
    ```
 
-1. Kick off server deployment
-   - Enable workflows on forked repository
-      1. Navigate to the github page for your forked sample-metadata repository
-      1. Click "Actions"
-      1. Click "I understand my workflows, go ahead and enable them"
-   - Run Azure Deploy Workflow
-      1. Navigate to the github page for your forked sample-metadata repository
-      1. Click "Actions"
+1. Kick off server deployment workflow
+   - Navigate to the github page for your forked sample-metadata repository and click "Actions"
+   - [If necessary] click "I understand my workflows, go ahead and enable them"
+   - Run workflow
       1. Click "Azure Deploy" under the list of workflows
       1. Click the "Run workflow" drop down menu
       1. Select the "main" branch and click the "Run workflow" button
-      1. The deployment record will run for a few minutes, and will eventually be annotated with a green check-mark if deployment was successful.
+   - The deployment record will run for a few minutes, and will eventually be annotated with a green check-mark if deployment was successful.
 1. Test successful deployment
    1. Get the sample-medata webhost FQDN by running the following command from `cpg-deploy-fork/azure`
 
@@ -288,43 +267,37 @@ git push origin
 
 The initial steps for deploying the Analysis Runner server are the same as the above deployment of the Sample Metadata server, except all operations are carried out in the context of the forked analysis runner repository. There is an an additional step to manually build the base driver image before deploying the server.
 
-1. Configure GitHub deployment secret
-1. Update deployment configuration
+1. Configure GitHub deployment secret (as in the [Sample Metadata server](#deploy-sample-metadata-server) deployment)
+1. Update deployment configuration (as in the [Sample Metadata server](#deploy-sample-metadata-server) deployment)
 1. From within `analysis-runner-fork/driver`:
    ```shell
    DOCKER_IMAGE="$(jq -r .container_registry ../deploy-config.prod.json)/analysis-runner/images/driver-base:1.2"
    docker build -f Dockerfile.base --tag=$DOCKER_IMAGE . && docker push $DOCKER_IMAGE
    ```
 1. Kick off server deployment
-   - Enable workflows on forked repository
-      1. Navigate to the github page for your forked analysis-runner repository
-      1. Click "Actions"
-      1. Click "I understand my workflows, go ahead and enable them"
-   - Run Azure Deploy Workflows
-      1. Navigate to the github page for your forked analysis-runner repository
-      1. Click "Actions"
+   - Navigate to the github page for your forked sample-metadata repository and click "Actions"
+   - [If necessary] click "I understand my workflows, go ahead and enable them"
+   - Run workflows
       1. Click "Azure Deploy" under the list of workflows
       1. Click the "Run workflow" drop down menu
       1. Select the "main" branch and click the "Run workflow" button
-      1. Then click "Azure Web Deploy" under the list of workflows
-      1. Click the "Run workflow" drop down menu
-      1. Select the "main" branch and click the "Run workflow" button
-      1. The deployment records will run for a few minutes, and will eventually be annotated with a green check-mark if deployment was successful.
+      1. Repeat steps 1-3 with the "Azure Web Deploy" workflow
+   - The deployment records will run for a few minutes, and will eventually be annotated with a green check-mark if deployment was successful.
 
 Testing successful deployment of the Analysis Runner server can be done by TODO
 
 # Tearing Down a deployment
 
-If the deployment VM is still available.
+If the deployment VM is still available:
 
 1. Navigate to `cpg-deploy-fork/azure/`
-1. `terraform destroy`. After confirmation, deletion of resources should take approximately 3 minutes
+1. Run `terraform destroy`. After confirmation, deletion of resources should take approximately 3 minutes
 1. Remove the github secrets from the `sample-metadata-fork` and `analysis-runner-fork` repositories
 
-If the deployment machine is no longer available
+If the deployment VM is no longer available:
 
 1. Configure a new deployment machine with the pre-requisites described under [Deployment machine pre-requisites](#deployment-machine-pre-requisites)
-1. Clone the cpg-deploy-fork repository
+1. Clone the `cpg-deploy-fork` repository
 1. Run the following to re-initialize a local client to existing terraform state
 
    ```bash
@@ -332,7 +305,7 @@ If the deployment machine is no longer available
    ./terraform_init.sh
    ```
 
-1. `terraform destroy`. After confirmation, deletion of resources should take approximately 3 minutes
+1. Run `terraform destroy`. After confirmation, deletion of resources should take approximately 3 minutes
 1. Remove the github secrets from the `sample-metadata-fork` and `analysis-runner-fork` repositories
 
 If you wish to remove the storage account where the terraform state is stored, and the resource group that houses it, run the following
