@@ -1,6 +1,6 @@
 # Deployment instructions for CPG infrastructure on Azure
 
-The following instructions are intended for the deployment of the Sample Metadata Server, Analysis Runner, and associated datsets.
+The following instructions are intended for the deployment of the Sample Metadata Server, Analysis Runner, and associated [datasets](./config/README.md).
 
 While the explanation below is intentionally thorough, the process for scripted deployment of the CPG infrastructure on Azure is fairly straightforward, involving the following logical steps:
 
