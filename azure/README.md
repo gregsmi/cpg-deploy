@@ -2,6 +2,20 @@
 
 The following instructions are intended for the deployment of the Sample Metadata Server, Analysis Runner, and associated datsets.
 
+While the explanation below is intentionally thorough, the process for scripted deployment of the CPG infrastructure on Azure is fairly straightforward, involving the following logical steps:
+
+1. Satisfy [Global prerequisites](#global-prerequisites)
+1. Satisfy [Deployment machine prerequisites](#deployment-machine-prerequisites)
+1. Deploy [Azure infrastructure](#infrastructure-deployment)
+   1. Clone repositories
+   1. Modify environment configuration files
+   1. Configure Terraform
+   1. Apply Terraform
+1. Apply [Post-deployment configuration](#post-deployment-configuration)
+   1. Configure Sample Metadata Server
+   1. Deploy Sample Metadata Server
+   1. Deploy Analysis Runner Server
+
 # Global prerequisites
 
 ## Fork necessary repositories
