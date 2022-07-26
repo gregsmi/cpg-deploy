@@ -14,7 +14,14 @@ locals {
     standard   = concat(var.definition.access_accounts.standard, [local.hail_accounts.standard.appId])
     full       = concat(var.definition.access_accounts.full, [local.hail_accounts.full.appId, var.deployment_ids.web_app_id])
     web-access = concat(var.definition.access_accounts.access, var.definition.access_accounts.web-access)
-    access     = var.definition.access_accounts.access
+    access     = concat(
+      var.definition.access_accounts.access, 
+      [
+        local.hail_accounts.test.appId,
+        local.hail_accounts.standard.appId,
+        local.hail_accounts.full.appId
+      ]
+    )
   }
 
   sample_metadata_permissions = {
