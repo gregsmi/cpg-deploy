@@ -5,8 +5,8 @@
     "access_accounts": {
         "test":[],
         "standard":[],
-        "full":["gregsmi_microsoft.com#EXT#"],
-        "access":["gregsmi_microsoft.com#EXT#"],
+        "full":["gregsmi_microsoft.com#EXT#", "miah_microsoft.com#EXT#"],
+        "access":["gregsmi_microsoft.com#EXT#", "miah_microsoft.com#EXT#"],
         "web-access":[]
     },
     "allowed_repos": [
