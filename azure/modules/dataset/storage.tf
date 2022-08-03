@@ -33,3 +33,12 @@ resource "azurerm_role_assignment" "readers" {
   role_definition_name = lookup(local.storage_roles, "viewer")
   principal_id         = each.value.principal
 }
+
+# Allow Hail SA's access to hail storage bucket.
+resource "azurerm_role_assignment" "hail_storage_role" {
+  for_each = local.hail_accounts
+
+  scope                = azurerm_storage_container.buckets["hail"].resource_manager_id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = each.value.objectId
+}
