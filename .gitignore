@@ -1,6 +1,7 @@
 .terraform*
 .database*
 out.plan
+*.tfvars.json
 *.tfvars
 
 # Byte-compiled / optimized / DLL files
