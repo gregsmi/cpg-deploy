@@ -10,3 +10,14 @@ variable "deployment_name" {
     error_message = "Variable deployment_name must be 8-16 characters lowercase alphanumeric."
   }
 }
+
+variable "deployment_principal" {
+  description = "Descriptor of the service principal for the provider to use in the deployment."
+  sensitive   = true
+  type = object({
+    tenant_id       = string
+    subscription_id = string
+    client_id       = string
+    client_secret   = string
+  })
+}

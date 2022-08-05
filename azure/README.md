@@ -27,7 +27,7 @@ Collect the following information about your Hail Batch deployment
 
 ## Assign RBAC roles
 
-In order to deploy the CPG infrastructure you will need both tenant-level roles and subscription-level roles granted for your identity. Though the following roles are a little broader than is strictly necessary, make sure you have the `Global Administrator` Azure Active Directory (AAD) role and the `Owner` role for the subscription in which you intend to deploy resources. TODO switch to minimum level permissions required.
+In order to initially deploy the CPG infrastructure you will need both tenant-level roles and subscription-level roles granted for your identity - in particular, make sure you have the `Global Administrator` Azure Active Directory (AAD) role and the `Owner` role for the subscription in which you intend to deploy resources. 
 
 See the following links for how to [AAD roles](https://docs.microsoft.com/en-us/azure/active-directory/fundamentals/active-directory-users-assign-role-azure-portal) and [subscription roles](https://docs.microsoft.com/en-us/azure/role-based-access-control/role-assignments-portal-subscription-admin) using Azure Portal.
 
@@ -100,7 +100,7 @@ on linux_amd64
 
 Clone the three forked repositories from the [Fork necessary repositories](#fork-necessary-repositories) step that contain the root terraform configuration, the Sample Metadata server, and the Analysis Runner server (`cpg-deploy`, `sample-metadata`, and  `analysis-runner`, respectively).
 
-_Note: replace each `organization/<repo>-fork` below with the path to your fork of the corresponding repository. It is assumed in a later step that these repo directories share a common parent directory._
+> _Note: replace each `organization/<repo>-fork` below with the path to your fork of the corresponding repository. It is assumed in a later step that these repo directories share a common parent directory._
 
 ```bash
 cd ~
@@ -114,7 +114,7 @@ git clone https://github.com/organization/analysis-runner-fork
 
 Obtain tenant and subscription GUIDs.
 
-_Note: replace `<deployment subscription>` with the name of the subscription in which you wish to deploy infrastructure, surrounded by double quotes._
+> _Note: replace `<deployment subscription>` below with the name of the subscription in which you wish to deploy infrastructure, surrounded by double quotes._
 
 ```bash
 az login --use-device-code
@@ -130,7 +130,7 @@ Some users can use `az login` to access multiple tenants; in this case use `az l
 
 Infrastructure deployment is configured with a few text files contained within the `cpg-deploy-fork` repository.
 
-_Note: use working directory `cpg-deploy-fork/azure` for the following steps._
+> _Note: use working directory `cpg-deploy-fork/azure` for the following steps._
 
 First, populate `deployment.env`:
 
@@ -156,8 +156,11 @@ Initially the deployment contains no datasets - dataset deployment is described 
    - Reads `deployment.env` to determine the correct account and resource names for the current deployment 
    - Ensures that you are logged into the correct Azure tenant (and attempts to log you in if not)
    - Creates a resource group, a storage account, and a container within that account
+   - Creates a service principal with the appropriate permissions to perform the deployment and uploads its credentials to storage
    - Initializes Terraform using the newly-created storage account and container to contain centralized backend state
-   - Creates a file `terraform.tfvars` that contains deployment-specific variables
+   - Creates a file `terraform.tfvars.json` that contains deployment-specific settings. **DO NOT check this file in - it contains SP credentials.**
+
+   > _Note: the logged-in user running the script below must have subscription `Owner` and tenant `Global Administrator` privileges in order to be able to create the requisite initial resources and assign necessary creation privileges to the new deployment service principal._
 
    ```bash
    chmod u+x terraform_init.sh
@@ -209,7 +212,7 @@ The following process is used to update the MariaDB database schema to the lates
    1. Change the "Deny public network access" selection to "No" and click "Save"
    1. Add a firewall rule allowing access from your local deployment host and click "Save" again. If you opted to deploy the CPG infrastructure from a VM, you will need to obtain the VMs public IP address from the Azure portal, not by using a Linux command like `ip addr show`
 1. Run Liquibase update:  
-   _Note: replace `../../sample-metadata-fork` below with a path to your local clone of your forked sample-metadata repository if it does not share a parent directory with the `cpg-deploy-fork` repo._
+   > _Note: replace `../../sample-metadata-fork` below with a path to your local clone of your forked sample-metadata repository if it does not share a parent directory with the `cpg-deploy-fork` repo._
 
    ```bash
    .database/liquibase \
@@ -255,13 +258,13 @@ The following process is used to update the MariaDB database schema to the lates
       1. Select the "main" branch and click the "Run workflow" button
    - The deployment record will run for a few minutes, and will eventually be annotated with a green check-mark if deployment was successful.
 1. Test successful deployment
-   1. Get the sample-medata webhost FQDN by running the following command from `cpg-deploy-fork/azure`
+   - Get the sample-metadata webhost FQDN by running the following command from `cpg-deploy-fork/azure`
 
    ```bash
    terraform output --json CPG_DEPLOY_CONFIG | jq -r '.sample_metadata_host'
    ```
 
-   1. Visit `<sample_metadata_host>/api/v1/project/all`. This should return "[]" as there are no projects in the sample-metadata server yet. To visit this page you will have to authenticate via your browser and potentially consent to app permissions for the Sample Metadata server.
+   - Visit `<sample_metadata_host>/api/v1/project/all`. This should return "[]" as there are no projects in the sample-metadata server yet. To visit this page you will have to authenticate via your browser and potentially consent to app permissions for the Sample Metadata server.
 
 ## Deploy Analysis Runner server
 

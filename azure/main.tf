@@ -174,7 +174,7 @@ resource "azurerm_role_assignment" "roles" {
 module "ci_cd_sp" {
   source = "./modules/sp"
 
-  display_name = "${var.deployment_name}-deployment-principal"
+  display_name = "${var.deployment_name}-apps-deploy"
   role_assignments = [
     { role = "AcrPush", scope = azurerm_container_registry.acr.id },
     { role = "Contributor", scope = module.sm_app.id },

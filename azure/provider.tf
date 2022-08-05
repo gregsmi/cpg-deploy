@@ -22,10 +22,16 @@ terraform {
 terraform {
   backend "azurerm" {}
 }
-
-provider "azuread" {
-}
-
+# Use specific SP set up by init to run Terraform operations.
 provider "azurerm" {
   features {}
+  subscription_id = var.deployment_principal.subscription_id
+  tenant_id       = var.deployment_principal.tenant_id
+  client_id       = var.deployment_principal.client_id
+  client_secret   = var.deployment_principal.client_secret
+}
+provider "azuread" {
+  tenant_id     = var.deployment_principal.tenant_id
+  client_id     = var.deployment_principal.client_id
+  client_secret = var.deployment_principal.client_secret
 }
