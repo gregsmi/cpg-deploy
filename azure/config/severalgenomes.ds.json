@@ -1,6 +1,6 @@
 {
     "name" : "severalgenomes",
-    "project_id" : "sevgen0001",
+    "project_id" : "sevgen002",
     "region" : "eastus",
     "access_accounts": {
         "test":[],

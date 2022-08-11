@@ -169,8 +169,12 @@ create_service_principal() {
   if [[ $? -ne 0 ]]; then
     err "Failed to add Application.ReadWrite.All app permission."
   fi
-  # Grant tenant-wide admin consent.
-  # az ad app permission grant --id $APP_ID --api $MSGRAPH_API --consent-type AllPrincipals --scope User.Read.All Application.ReadWrite.All
+  # Add MSGraph Group.ReadWrite.All app permission for resource.azuread_group.
+  1>/dev/null az ad app permission add --id $APP_ID --api $MSGRAPH_API --api-permissions 62a82d76-70ea-41e2-9197-370581804d09=Role --only-show-errors
+  if [[ $? -ne 0 ]]; then
+    err "Failed to add Group.ReadWrite.All app permission."
+  fi
+  # Grant tenant-wide admin consent. NOTE THIS DOESN'T ALWAYS "TAKE" THE FIRST TIME??
   az ad app permission admin-consent --id $APP_ID --only-show-errors
   if [[ $? -ne 0 ]]; then
     err "Failed to grant admin consent."
