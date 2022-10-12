@@ -25,6 +25,7 @@ locals {
 
   smapi_app_name = "smapi-${var.deployment_name}"
   arapi_app_name = "arapi-${var.deployment_name}"
+  web_app_name = "web-${var.deployment_name}"
 
   HAIL_DEPLOY_CONFIG = {
     location : "external",
@@ -38,7 +39,7 @@ locals {
     sample_metadata_host : "https://${local.smapi_app_name}.azurewebsites.net/",
     analysis_runner_project : var.deployment_name,
     analysis_runner_host : "https://${local.arapi_app_name}.azurewebsites.net/",
-    web_url_template : "https://{namespace}-web-${var.deployment_name}.azurewebsites.net/{dataset}",
+    web_host_base : "${local.web_app_name}.azurewebsites.net",
     container_registry : azurerm_container_registry.acr.login_server
   }
 }
@@ -109,7 +110,7 @@ module "arweb_apps" {
   source   = "./modules/web_app"
   for_each = toset(["main", "test"])
 
-  app_name                   = "${each.key}-web-${var.deployment_name}"
+  app_name                   = "${each.key}-${local.web_app_name}"
   resource_group             = data.azurerm_resource_group.rg
   app_service_plan_id        = azurerm_service_plan.appserviceplan.id
   log_analytics_workspace_id = azurerm_log_analytics_workspace.la.id

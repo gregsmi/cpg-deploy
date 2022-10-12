@@ -5,5 +5,5 @@
     "container_registry": "azcpg001acr.azurecr.io",
     "sample_metadata_host": "https://smapi-azcpg001.azurewebsites.net/",
     "sample_metadata_project": "azcpg001",
-    "web_url_template": "https://{namespace}-web-azcpg001.azurewebsites.net/{dataset}"
+    "web_host_base": "web-azcpg001.azurewebsites.net"
 }
