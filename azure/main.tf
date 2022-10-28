@@ -40,7 +40,8 @@ locals {
     analysis_runner_project : var.deployment_name,
     analysis_runner_host : "https://${local.arapi_app_name}.azurewebsites.net/",
     web_host_base : "${local.web_app_name}.azurewebsites.net",
-    container_registry : azurerm_container_registry.acr.login_server
+    container_registry : azurerm_container_registry.acr.login_server,
+    deployment_name : var.deployment_name
   }
 }
 
@@ -159,9 +160,14 @@ data "azurerm_storage_account" "main" {
   resource_group_name = data.azurerm_resource_group.rg.name
 }
 resource "azurerm_storage_container" "config" {
-  name                  = "cpg-config"
+  name                  = "config"
   storage_account_name  = data.azurerm_storage_account.main.name
   container_access_type = "private"
+}
+resource "azurerm_storage_container" "reference" {
+  name                  = "reference"
+  storage_account_name  = data.azurerm_storage_account.main.name
+  container_access_type = "blob"
 }
 # Give each dataset's "access" group r/w permissions.
 resource "azurerm_role_assignment" "roles" {
