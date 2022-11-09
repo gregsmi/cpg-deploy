@@ -13,6 +13,6 @@
         "gregsmi/severalgenomes",
         "gregsmi/analysis-runner",
         "jeremiahwander/automated-interpretation-pipeline",
-	"jeremiahwander/references"
+	    "jeremiahwander/references"
     ]
 }
