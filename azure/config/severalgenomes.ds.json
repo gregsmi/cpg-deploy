@@ -12,6 +12,7 @@
     "allowed_repos": [
         "gregsmi/severalgenomes",
         "gregsmi/analysis-runner",
-        "jeremiahwander/automated-interpretation-pipeline"
+        "jeremiahwander/automated-interpretation-pipeline",
+	"jeremiahwander/references"
     ]
 }
