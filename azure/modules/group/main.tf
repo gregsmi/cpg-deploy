@@ -15,6 +15,8 @@ data "azuread_users" "users" {
   mail_nicknames = [for name in var.member_names : name if !can(regex(local.IS_GUID, name))]
 }
 
+# There seems to be a terraform bug causing an error here on apply ("Invalid for_each argument").
+# Commenting this block out and running, then commenting back in and rerunning seems to work.
 resource "azuread_group_member" "members" {
   for_each = toset(concat(
     data.azuread_service_principals.sps.object_ids,

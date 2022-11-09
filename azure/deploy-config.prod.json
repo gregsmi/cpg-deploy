@@ -4,6 +4,7 @@
     "cloud": "azure",
     "container_registry": "azcpg001acr.azurecr.io",
     "deployment_name": "azcpg001",
+    "reference_base": "hail-az://azcpg001sa/reference",
     "sample_metadata_host": "https://smapi-azcpg001.azurewebsites.net/",
     "sample_metadata_project": "azcpg001",
     "web_host_base": "web-azcpg001.azurewebsites.net"

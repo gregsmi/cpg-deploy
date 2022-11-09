@@ -41,7 +41,8 @@ locals {
     analysis_runner_host : "https://${local.arapi_app_name}.azurewebsites.net/",
     web_host_base : "${local.web_app_name}.azurewebsites.net",
     container_registry : azurerm_container_registry.acr.login_server,
-    deployment_name : var.deployment_name
+    deployment_name : var.deployment_name,
+    reference_base : "hail-az://${data.azurerm_storage_account.main.name}/${azurerm_storage_container.reference.name}"
   }
 }
 
