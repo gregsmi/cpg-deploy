@@ -170,14 +170,20 @@ resource "azurerm_storage_container" "reference" {
   storage_account_name  = data.azurerm_storage_account.main.name
   container_access_type = "blob"
 }
-# Give each dataset's "access" group r/w permissions.
-resource "azurerm_role_assignment" "roles" {
+# Give each dataset's "access" group r/w permissions to config.
+resource "azurerm_role_assignment" "config_roles" {
   for_each             = module.datasets
   scope                = azurerm_storage_container.config.resource_manager_id
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = each.value.access_group_id
 }
-
+# Give each dataset's "access" group read permissions to reference.
+resource "azurerm_role_assignment" "ref_roles" {
+  for_each             = module.datasets
+  scope                = azurerm_storage_container.reference.resource_manager_id
+  role_definition_name = "Storage Blob Data Reader"
+  principal_id         = each.value.access_group_id
+}
 # Identity used for Github Action-based deployment of app services.
 module "ci_cd_sp" {
   source = "./modules/sp"
