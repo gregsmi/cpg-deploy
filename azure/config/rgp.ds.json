@@ -1,0 +1,16 @@
+{
+    "name" : "rgp",
+    "project_id" : "raregen001",
+    "region" : "eastus",
+    "access_accounts": {
+        "test":[],
+        "standard":[],
+        "full":["gregsmi_microsoft.com#EXT#", "miah_microsoft.com#EXT#"],
+        "access":["gregsmi_microsoft.com#EXT#", "miah_microsoft.com#EXT#"],
+        "web-access":[]
+    },
+    "allowed_repos": [
+        "gregsmi/analysis-runner",
+        "jeremiahwander/automated-interpretation-pipeline"
+    ]
+}

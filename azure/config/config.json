@@ -1,6 +1,7 @@
 {
     "administrators": [
-        "gregsmi_microsoft.com#EXT#"
+        "gregsmi_microsoft.com#EXT#",
+        "miah_microsoft.com#EXT#"
     ],
     "hail": {
         "domain": "azhailtest0.net",
