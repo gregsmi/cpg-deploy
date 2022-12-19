@@ -11,14 +11,6 @@ module "postgres_db" {
   database_names = ["reference_data_db", "seqrdb"]
 }
 
-# resource "azurerm_elastic_cloud_elasticsearch" "elastic_search" {
-#   name                        = "seqr-es"
-#   resource_group_name         = azurerm_resource_group.rg.name
-#   location                    = azurerm_resource_group.rg.location
-#   sku_name                    = "ess-monthly-consumption_Monthly"
-#   elastic_cloud_email_address = "gregsmi@microsoft.com"
-# }
-
 locals {
   k8s_secrets = {
     # Secrets to place in k8s for consumption by SEQR service.

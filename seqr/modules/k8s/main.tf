@@ -25,18 +25,28 @@ resource "azurerm_kubernetes_cluster" "cluster" {
   }
 }
 
-provider "kubernetes" {
-  host = "https://${azurerm_kubernetes_cluster.cluster.fqdn}"
+locals {
+  config = {
+    host = "https://${azurerm_kubernetes_cluster.cluster.fqdn}"
 
-  cluster_ca_certificate = base64decode(
-    azurerm_kubernetes_cluster.cluster.kube_config[0].cluster_ca_certificate
-  )
-  client_certificate = base64decode(
-    azurerm_kubernetes_cluster.cluster.kube_config[0].client_certificate
-  )
-  client_key = base64decode(
-    azurerm_kubernetes_cluster.cluster.kube_config[0].client_key
-  )
+    cluster_ca_certificate = base64decode(
+      azurerm_kubernetes_cluster.cluster.kube_config[0].cluster_ca_certificate
+    )
+    client_certificate = base64decode(
+      azurerm_kubernetes_cluster.cluster.kube_config[0].client_certificate
+    )
+    client_key = base64decode(
+      azurerm_kubernetes_cluster.cluster.kube_config[0].client_key
+    )
+
+  }
+}
+
+provider "kubernetes" {
+  host = local.config.host
+  cluster_ca_certificate = local.config.cluster_ca_certificate
+  client_certificate = local.config.client_certificate
+  client_key = local.config.client_key
 }
 
 resource "kubernetes_secret" "secrets" {
