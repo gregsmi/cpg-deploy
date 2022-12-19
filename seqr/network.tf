@@ -13,9 +13,9 @@ resource "azurerm_subnet" "k8s_subnet" {
   virtual_network_name = azurerm_virtual_network.default.name
 }
 
-# Subnet for private endpoint tunnel to database.
-resource "azurerm_subnet" "db_subnet" {
-  name                 = "db-subnet"
+# Subnet for private endpoint tunnel to Postgres database.
+resource "azurerm_subnet" "pg_subnet" {
+  name                 = "pg-subnet"
   address_prefixes     = ["10.40.0.0/24"]
   resource_group_name  = azurerm_resource_group.rg.name
   virtual_network_name = azurerm_virtual_network.default.name

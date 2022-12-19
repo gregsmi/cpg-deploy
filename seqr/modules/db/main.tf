@@ -15,7 +15,7 @@ locals {
 
 resource "azurerm_postgresql_server" "server" {
   # Becomes "<name>.?.database.azure.com"
-  name                = "seqr-pg-${random_id.db_name_suffix.hex}"
+  name                = "pg-${random_id.db_name_suffix.hex}"
   location            = var.resource_group.location
   resource_group_name = var.resource_group.name
 

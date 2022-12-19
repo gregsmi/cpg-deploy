@@ -13,7 +13,7 @@ resource "azurerm_storage_account" "storage" {
 
 resource "azurerm_storage_container" "buckets" {
   for_each              = local.storage_permissions
-  name                  = "${each.key}"
+  name                  = each.key
   storage_account_name  = azurerm_storage_account.storage.name
   container_access_type = "private"
 }

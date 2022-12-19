@@ -304,6 +304,6 @@ main() {
 # Make pipelined operations fail out early.
 set -o pipefail
 # Init utils.
-source "script_utils.sh"
+source "../script_utils.sh"
 # Run main.
 main "$@"

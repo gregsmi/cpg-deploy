@@ -1,13 +1,5 @@
-variable "location" {
-  type = string
-}
-
-resource "random_id" "rg_name_suffix" {
-  byte_length = 4
-}
-
 resource "azurerm_resource_group" "rg" {
-  name     = "seqr-${random_id.rg_name_suffix.hex}"
+  name     = "${var.deployment_name}-rg"
   location = var.location
 }
 
@@ -15,28 +7,36 @@ module "postgres_db" {
   source = "./modules/db"
 
   resource_group = azurerm_resource_group.rg
-  subnet_id      = azurerm_subnet.db_subnet.id
+  subnet_id      = azurerm_subnet.pg_subnet.id
   database_names = ["reference_data_db", "seqrdb"]
 }
 
-resource "azurerm_kubernetes_cluster" "cluster" {
-  name                = "seqr-aks"
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = azurerm_resource_group.rg.location
-  dns_prefix          = "aks0"
+# resource "azurerm_elastic_cloud_elasticsearch" "elastic_search" {
+#   name                        = "seqr-es"
+#   resource_group_name         = azurerm_resource_group.rg.name
+#   location                    = azurerm_resource_group.rg.location
+#   sku_name                    = "ess-monthly-consumption_Monthly"
+#   elastic_cloud_email_address = "gregsmi@microsoft.com"
+# }
 
-  default_node_pool {
-    name           = "default"
-    vm_size        = "Standard_D2_v2"
-    vnet_subnet_id = azurerm_subnet.k8s_subnet.id
-
-    enable_auto_scaling = true
-
-    min_count = 1
-    max_count = 5
+locals {
+  k8s_secrets = {
+    # Secrets to place in k8s for consumption by SEQR service.
+    postgres-secrets = {
+      password = module.postgres_db.credentials.password
+    }
+    seqr-secrets = {
+      django_key = "random"
+      # seqr_es_password required here as well if the SEQR
+      # helm template has enable_elasticsearch_auth set
+    }
   }
+}
 
-  identity {
-    type = "SystemAssigned"
-  }
+module "k8s_cluster" {
+  source = "./modules/k8s"
+
+  resource_group = azurerm_resource_group.rg
+  subnet_id      = azurerm_subnet.k8s_subnet.id
+  secrets        = local.k8s_secrets
 }

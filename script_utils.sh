@@ -15,6 +15,34 @@ err() {
   exit 1
 }
 
+#######################################
+# Login to Azure using the specified tenant 
+# and set the specified subscription.
+# Arguments:
+#   ID of a tenant to login to.
+#   ID of subscription to set.
+#######################################
+login_azure() {
+  local aad_tenant="$1"
+  local az_subscription="$2"
+
+  # Check if already logged in by trying to get an access token with the specified tenant.
+  2>/dev/null az account get-access-token --tenant "${aad_tenant}" --output none
+  if [[ $? -ne 0 ]] ; then
+    echo "Login required to authenticate with Azure."
+    echo "Attempting to login to Tenant: ${aad_tenant}"
+    az login --output none --tenant "${aad_tenant}"
+    if [[ $? -ne 0 ]]; then
+      err "Failed to authenticate with Azure"
+    fi
+  fi
+
+  local sub_name=$(az account show --subscription "${az_subscription}" | jq -r .name)
+  # Set the subscription so future commands don't need to specify it.
+  echo "Setting subscription to $sub_name (${az_subscription})."
+  az account set --subscription "${az_subscription}"
+}
+
 read_deployment_vars() {
   # Load variables we need from a .env file if specified. Sourcing it as a script.
   if [[ -f deployment.env ]]; then

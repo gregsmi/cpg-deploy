@@ -25,7 +25,7 @@ locals {
 
   smapi_app_name = "smapi-${var.deployment_name}"
   arapi_app_name = "arapi-${var.deployment_name}"
-  web_app_name = "web-${var.deployment_name}"
+  web_app_name   = "web-${var.deployment_name}"
 
   HAIL_DEPLOY_CONFIG = {
     location : "external",
