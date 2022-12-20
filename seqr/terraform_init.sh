@@ -28,8 +28,6 @@ main() {
 
   # Suppress unnecessary interactive text.
   export TF_IN_AUTOMATION=true
-  # Configure Terraform backend (azurerm) to use Azure blob container to 
-  # store state. This configuration is persisted in local tfstate.
   terraform init -reconfigure -upgrade
 
   # Create/update Terraform variables file.
