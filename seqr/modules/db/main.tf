@@ -8,7 +8,6 @@ resource "random_password" "db_root_password" {
   special = false
 }
 locals {
-  # Note on Azure 'root' is an illegal admin login so we use 'dbroot'
   db_root_user = "dbroot"
   default_port = 5433
 }

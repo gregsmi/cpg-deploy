@@ -32,3 +32,41 @@ module "k8s_cluster" {
   subnet_id      = azurerm_subnet.k8s_subnet.id
   secrets        = local.k8s_secrets
 }
+
+resource "helm_release" "elasticsearch" {
+  name       = "elasticsearch"
+  repository = "https://helm.elastic.co"
+  chart      = "elasticsearch"
+  version    = "8.5.1"
+  timeout    = 900
+
+  set {
+    name  = "volumeClaimTemplate.resources.requests.storage"
+    value = "10Gi"
+  }
+}
+
+resource "helm_release" "seqr" {
+  name       = "seqr"
+  repository = "https://broadinstitute.github.io/seqr-helm/"
+  chart      = "seqr"
+  version    = "0.0.11"
+  timeout    = 60
+
+  set {
+    name  = "environment.STATIC_MEDIA_DIR"
+    value = "static"
+  }
+
+  set {
+    name  = "environment.POSTGRES_USERNAME"
+    value = module.postgres_db.credentials.username
+  }
+
+  set {
+    name  = "environment.POSTGRES_SERVICE_HOSTNAME"
+    value = module.postgres_db.credentials.host
+  }
+
+  depends_on = [helm_release.elasticsearch]
+}

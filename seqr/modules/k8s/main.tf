@@ -43,10 +43,10 @@ locals {
 }
 
 provider "kubernetes" {
-  host = local.config.host
+  host                   = local.config.host
   cluster_ca_certificate = local.config.cluster_ca_certificate
-  client_certificate = local.config.client_certificate
-  client_key = local.config.client_key
+  client_certificate     = local.config.client_certificate
+  client_key             = local.config.client_key
 }
 
 resource "kubernetes_secret" "secrets" {
