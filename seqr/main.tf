@@ -51,7 +51,7 @@ resource "helm_release" "seqr" {
   repository = "https://broadinstitute.github.io/seqr-helm/"
   chart      = "seqr"
   version    = "0.0.11"
-  timeout    = 60
+  timeout    = 120
 
   set {
     name  = "environment.STATIC_MEDIA_DIR"
