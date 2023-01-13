@@ -1,12 +1,9 @@
 
-resource "random_id" "k8s_name_suffix" {
-  byte_length = 4
-}
-
 resource "azurerm_kubernetes_cluster" "cluster" {
-  name                = "aks-${random_id.k8s_name_suffix.hex}"
+  name                = "aks0"
   resource_group_name = var.resource_group.name
   location            = var.resource_group.location
+  node_resource_group = var.node_resource_group_name
   dns_prefix          = "aks0"
 
   default_node_pool {

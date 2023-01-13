@@ -1,0 +1,21 @@
+service:
+  type: ClusterIP
+  port: ${service_port}
+
+ingress:
+  enabled: true
+  className: "nginx"
+  hosts:
+    - paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: seqr
+            port:
+              number: ${service_port}
+
+environment:
+  POSTGRES_USERNAME: ${pg_user}
+  POSTGRES_SERVICE_HOSTNAME: ${pg_host}
+  STATIC_MEDIA_DIR: static

@@ -6,6 +6,11 @@ variable "resource_group" {
   })
 }
 
+variable "node_resource_group_name" {
+  description = "Name to use for AKS-created node resource group."
+  type = string
+}
+
 variable "subnet_id" {
   description = "ID of subnet for Kubernetes to use."
   type        = string

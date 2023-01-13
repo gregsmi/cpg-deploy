@@ -6,6 +6,11 @@ variable "resource_group" {
   })
 }
 
+variable "server_name" {
+  description = "Name of the database server resource."
+  type        = string
+}
+
 variable "database_names" {
   description = "Names of databases to create within server."
   type        = list(string)

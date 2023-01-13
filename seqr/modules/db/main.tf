@@ -1,8 +1,3 @@
-
-resource "random_id" "db_name_suffix" {
-  byte_length = 4
-}
-
 resource "random_password" "db_root_password" {
   length  = 22
   special = false
@@ -14,7 +9,7 @@ locals {
 
 resource "azurerm_postgresql_server" "server" {
   # Becomes "<name>.?.database.azure.com"
-  name                = "pg-${random_id.db_name_suffix.hex}"
+  name                = var.server_name
   location            = var.resource_group.location
   resource_group_name = var.resource_group.name
 
