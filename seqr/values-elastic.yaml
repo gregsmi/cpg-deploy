@@ -1,0 +1,7 @@
+volumeClaimTemplate:
+  resources:
+    requests:
+      storage: 10Gi
+
+secret:
+  password: ${password}

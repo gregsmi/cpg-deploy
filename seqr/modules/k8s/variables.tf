@@ -8,7 +8,7 @@ variable "resource_group" {
 
 variable "node_resource_group_name" {
   description = "Name to use for AKS-created node resource group."
-  type = string
+  type        = string
 }
 
 variable "subnet_id" {

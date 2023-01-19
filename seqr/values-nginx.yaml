@@ -1,0 +1,5 @@
+controller:
+  service:
+    loadBalancerIP: ${ip_address}
+    annotations:
+      service.beta.kubernetes.io/azure-dns-label-name: ${dns_label}

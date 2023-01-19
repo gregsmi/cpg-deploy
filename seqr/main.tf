@@ -20,9 +20,8 @@ locals {
       password = module.postgres_db.credentials.password
     }
     seqr-secrets = {
-      django_key = "random"
-      # seqr_es_password required here as well if the SEQR
-      # helm template has enable_elasticsearch_auth set
+      django_key       = "random"
+      seqr_es_password = random_password.elastic_password.result
     }
   }
 }
@@ -43,8 +42,18 @@ resource "azurerm_public_ip" "ingress" {
   resource_group_name = local.k8s_node_resource_group_name
   allocation_method   = "Static"
   sku                 = "Standard"
+
+  # These properties are added by the nginx ingress controller.
+  tags              = { "k8s-azure-dns-label-service" = "ingress-nginx/ingress-nginx-controller" }
+  domain_name_label = "ms-seqr"
+
   # Wait until AKS creates the resource group.
-  depends_on          = [module.k8s_cluster]
+  depends_on = [module.k8s_cluster]
+}
+
+resource "random_password" "elastic_password" {
+  length  = 22
+  special = false
 }
 
 resource "helm_release" "elasticsearch" {
@@ -54,11 +63,21 @@ resource "helm_release" "elasticsearch" {
   version    = "8.5.1"
   timeout    = 900
 
-  set {
-    name  = "volumeClaimTemplate.resources.requests.storage"
-    value = "10Gi"
-  }
+  values = [
+    templatefile("values-elastic.yaml", {
+      password = random_password.elastic_password.result
+    })
+  ]
 }
+
+# resource "helm_release" "kibana" {
+#   name       = "kibana"
+#   repository = "https://helm.elastic.co"
+#   chart      = "kibana"
+#   version    = "8.5.1"
+
+#   depends_on = [helm_release.elasticsearch]
+# }
 
 # Create nginx k8s ingress controller with an Azure load balancer.
 resource "helm_release" "ingress_nginx" {
@@ -70,10 +89,12 @@ resource "helm_release" "ingress_nginx" {
   namespace        = "ingress-nginx"
   create_namespace = true
 
-  set {
-    name  = "controller.service.loadBalancerIP"
-    value = azurerm_public_ip.ingress.ip_address
-  }
+  values = [
+    templatefile("values-nginx.yaml", {
+      ip_address = azurerm_public_ip.ingress.ip_address
+      dns_label  = "ms-seqr"
+    })
+  ]
 }
 
 # Create the single SEQR container deployment after all prerequisite services.
@@ -84,7 +105,7 @@ resource "helm_release" "seqr" {
   version    = "0.0.12"
 
   values = [
-    templatefile("seqr-values.yaml", {
+    templatefile("values-seqr.yaml", {
       service_port = 8000
       pg_host      = module.postgres_db.credentials.host
       pg_user      = module.postgres_db.credentials.username
