@@ -112,5 +112,10 @@ resource "helm_release" "seqr" {
     })
   ]
 
-  depends_on = [helm_release.elasticsearch]
+  depends_on = [
+    module.postgres_db,
+    helm_release.ingress_nginx,
+    helm_release.elasticsearch,
+    # helm_release.kibana,
+  ]
 }

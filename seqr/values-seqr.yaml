@@ -15,7 +15,14 @@ ingress:
             port:
               number: ${service_port}
 
+# Enabling this makes seqr look for passwords in both kibana and ES secrets and 
+# mount them in as SEQR_ELASTICSEARCH_PASSWORD and KIBANA_ELASTICSEARCH_PASSWORD.
+# BUGBUG the ES user is hardcoded to 'seqr' but the default Helm user is 'elastic'.
+# enable_elasticsearch_auth: true
+
 environment:
   POSTGRES_USERNAME: ${pg_user}
   POSTGRES_SERVICE_HOSTNAME: ${pg_host}
+  ELASTICSEARCH_SERVICE_HOSTNAME: elasticsearch-master
+  ELASTICSEARCH_PROTOCOL: https
   STATIC_MEDIA_DIR: static
