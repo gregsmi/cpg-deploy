@@ -70,14 +70,15 @@ resource "helm_release" "elasticsearch" {
   ]
 }
 
-# resource "helm_release" "kibana" {
-#   name       = "kibana"
-#   repository = "https://helm.elastic.co"
-#   chart      = "kibana"
-#   version    = "8.5.1"
+resource "helm_release" "kibana" {
+  name       = "kibana"
+  repository = "https://helm.elastic.co"
+  chart      = "kibana"
+  version    = "8.5.1"
+  timeout    = 900
 
-#   depends_on = [helm_release.elasticsearch]
-# }
+  depends_on = [helm_release.elasticsearch]
+}
 
 # Create nginx k8s ingress controller with an Azure load balancer.
 resource "helm_release" "ingress_nginx" {
@@ -116,6 +117,6 @@ resource "helm_release" "seqr" {
     module.postgres_db,
     helm_release.ingress_nginx,
     helm_release.elasticsearch,
-    # helm_release.kibana,
+    helm_release.kibana,
   ]
 }
