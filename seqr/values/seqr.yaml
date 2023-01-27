@@ -4,20 +4,22 @@ service:
 
 ingress:
   enabled: true
-  className: "nginx"
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
   hosts:
-    - paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: seqr
-            port:
-              number: ${service_port}
-
+  - host: ${fqdn}
+    paths:
+    - path: /
+      pathType: Prefix
+  tls:
+  - secretName: tls-secret
+    hosts:
+    - ${fqdn}
+    
 # Enabling this makes seqr look for passwords in both kibana and ES secrets and 
 # mount them in as SEQR_ELASTICSEARCH_PASSWORD and KIBANA_ELASTICSEARCH_PASSWORD.
-# BUGBUG the ES user is hardcoded to 'seqr' but the default Helm user is 'elastic'.
+# BUGBUG the ES user is hardcoded to 'seqr' but the default ES Helm user is 'elastic'.
 # enable_elasticsearch_auth: true
 
 environment:

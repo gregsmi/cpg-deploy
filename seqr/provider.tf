@@ -31,3 +31,10 @@ provider "helm" {
     client_key             = module.k8s_cluster.config.client_key
   }
 }
+
+provider "kubernetes" {
+  host                   = module.k8s_cluster.config.host
+  cluster_ca_certificate = module.k8s_cluster.config.cluster_ca_certificate
+  client_certificate     = module.k8s_cluster.config.client_certificate
+  client_key             = module.k8s_cluster.config.client_key
+}
