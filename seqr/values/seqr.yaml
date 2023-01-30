@@ -17,6 +17,11 @@ ingress:
     hosts:
     - ${fqdn}
     
+image:
+  # Fully-qualified image repo/name and tag.
+  repository: ${image_repo}
+  tag: ${image_tag}
+
 # Enabling this makes seqr look for passwords in both kibana and ES secrets and 
 # mount them in as SEQR_ELASTICSEARCH_PASSWORD and KIBANA_ELASTICSEARCH_PASSWORD.
 # BUGBUG the ES user is hardcoded to 'seqr' but the default ES Helm user is 'elastic'.

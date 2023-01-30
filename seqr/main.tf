@@ -77,6 +77,8 @@ resource "helm_release" "seqr" {
       fqdn         = local.fqdn
       pg_host      = module.postgres_db.credentials.host
       pg_user      = module.postgres_db.credentials.username
+      image_repo   = "${azurerm_container_registry.acr.login_server}/seqr"
+      image_tag    = "latest"
     })
   ]
 
@@ -85,5 +87,23 @@ resource "helm_release" "seqr" {
     helm_release.ingress_nginx,
     helm_release.elasticsearch,
     helm_release.kibana,
+  ]
+}
+
+resource "azurerm_container_registry" "acr" {
+  name                = "${var.deployment_name}acr"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  admin_enabled       = true
+  sku                 = "Premium"
+}
+
+# Identity used for Github Action-based deployment of docker images.
+module "ci_cd_sp" {
+  source = "../azure/modules/sp"
+
+  display_name = "${var.deployment_name}-gh-deploy"
+  role_assignments = [
+    { role = "AcrPush", scope = azurerm_container_registry.acr.id },
   ]
 }
