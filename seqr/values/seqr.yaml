@@ -36,4 +36,12 @@ environment:
   # respectively but the default Helm user for ES & kibana is 'elastic'.
   KIBANA_ELASTICSEARCH_USER: elastic
   ELASTICSEARCH_USER: elastic
-  
+
+additional_secrets:
+  # Default ES Helm chart generates a self-signed cert so we 
+  # need to pass seqr the CA from a well-known ES location.
+  - name: ELASTICSEARCH_CA_PATH
+    valueFrom:
+      secretKeyRef:
+        name: elasticsearch-master-certs
+        key: ca.crt

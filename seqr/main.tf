@@ -3,6 +3,14 @@ resource "azurerm_resource_group" "rg" {
   location = var.location
 }
 
+resource "azurerm_container_registry" "acr" {
+  name                = "${var.deployment_name}acr"
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = azurerm_resource_group.rg.location
+  admin_enabled       = true
+  sku                 = "Premium"
+}
+
 module "postgres_db" {
   source = "./modules/db"
 
@@ -14,19 +22,11 @@ module "postgres_db" {
 
 locals {
   k8s_node_resource_group_name = "${var.deployment_name}-aks-rg"
-  
-  # Secrets to place in k8s for consumption by SEQR service.
   k8s_secrets = {
-    postgres-secrets = {
-      password = module.postgres_db.credentials.password
-    }
-    seqr-secrets = {
-      django_key       = "random"
-      seqr_es_password = random_password.elastic_password.result
-    }
-    kibana-secrets = {
-      "elasticsearch.password" = random_password.elastic_password.result
-    }
+    # Well-known secrets to place in k8s for consumption by SEQR service.
+    postgres-secrets = { password = module.postgres_db.credentials.password }
+    kibana-secrets   = { "elasticsearch.password" = random_password.elastic_password.result }
+    seqr-secrets     = { seqr_es_password = random_password.elastic_password.result, django_key = "random" }
   }
 }
 
@@ -39,34 +39,10 @@ module "k8s_cluster" {
   secrets                  = local.k8s_secrets
 }
 
-resource "random_password" "elastic_password" {
-  length  = 22
-  special = false
-}
-
-resource "helm_release" "elasticsearch" {
-  name       = "elasticsearch"
-  repository = "https://helm.elastic.co"
-  chart      = "elasticsearch"
-  version    = "8.5.1"
-  timeout    = 900
-
-  values = [
-    templatefile("values/elastic.yaml", {
-      # default user created by chart is 'elastic' (not configurable)
-      password = random_password.elastic_password.result
-    })
-  ]
-}
-
-resource "helm_release" "kibana" {
-  name       = "kibana"
-  repository = "https://helm.elastic.co"
-  chart      = "kibana"
-  version    = "8.5.1"
-  timeout    = 900
-
-  depends_on = [helm_release.elasticsearch]
+resource "azurerm_role_assignment" "k8s_to_acr" {
+  role_definition_name = "AcrPull"
+  scope                = azurerm_container_registry.acr.id
+  principal_id         = module.k8s_cluster.principal_id
 }
 
 # Create the single SEQR container deployment after all prerequisite services.
@@ -93,20 +69,6 @@ resource "helm_release" "seqr" {
     helm_release.elasticsearch,
     helm_release.kibana,
   ]
-}
-
-resource "azurerm_container_registry" "acr" {
-  name                = "${var.deployment_name}acr"
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = azurerm_resource_group.rg.location
-  admin_enabled       = true
-  sku                 = "Premium"
-}
-
-resource "azurerm_role_assignment" "k8s_to_acr" {
-  role_definition_name = "AcrPull"
-  scope                = azurerm_container_registry.acr.id
-  principal_id         = module.k8s_cluster.principal_id
 }
 
 # Identity used for Github Action-based deployment of docker images.
