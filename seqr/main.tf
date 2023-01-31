@@ -23,6 +23,9 @@ locals {
       django_key       = "random"
       seqr_es_password = random_password.elastic_password.result
     }
+    kibana-secrets = {
+      "elasticsearch.password" = random_password.elastic_password.result
+    }
   }
 }
 
@@ -49,6 +52,7 @@ resource "helm_release" "elasticsearch" {
 
   values = [
     templatefile("values/elastic.yaml", {
+      # default user created by chart is 'elastic' (not configurable)
       password = random_password.elastic_password.result
     })
   ]
@@ -78,7 +82,7 @@ resource "helm_release" "seqr" {
       pg_host      = module.postgres_db.credentials.host
       pg_user      = module.postgres_db.credentials.username
       image_repo   = "${azurerm_container_registry.acr.login_server}/seqr"
-      image_tag    = "latest"
+      image_tag    = "78260b8553fcf683446287c09c28437db7655e2a"
     })
   ]
 
@@ -96,6 +100,12 @@ resource "azurerm_container_registry" "acr" {
   location            = azurerm_resource_group.rg.location
   admin_enabled       = true
   sku                 = "Premium"
+}
+
+resource "azurerm_role_assignment" "k8s_to_acr" {
+  role_definition_name = "AcrPull"
+  scope                = azurerm_container_registry.acr.id
+  principal_id         = module.k8s_cluster.principal_id
 }
 
 # Identity used for Github Action-based deployment of docker images.

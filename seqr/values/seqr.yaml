@@ -22,10 +22,9 @@ image:
   repository: ${image_repo}
   tag: ${image_tag}
 
-# Enabling this makes seqr look for passwords in both kibana and ES secrets and 
-# mount them in as SEQR_ELASTICSEARCH_PASSWORD and KIBANA_ELASTICSEARCH_PASSWORD.
-# BUGBUG the ES user is hardcoded to 'seqr' but the default ES Helm user is 'elastic'.
-# enable_elasticsearch_auth: true
+# Enabling this makes seqr look for passwords in both kibana and ES secrets 
+# and mount the passwords in as KIBANA_ES_PASSWORD and SEQR_ES_PASSWORD.
+enable_elasticsearch_auth: true
 
 environment:
   POSTGRES_USERNAME: ${pg_user}
@@ -33,3 +32,8 @@ environment:
   ELASTICSEARCH_SERVICE_HOSTNAME: elasticsearch-master
   ELASTICSEARCH_PROTOCOL: https
   STATIC_MEDIA_DIR: static
+  # BUGBUG when auth is on the ES/kibana users are hardcoded to 'seqr'/'kibana' 
+  # respectively but the default Helm user for ES & kibana is 'elastic'.
+  KIBANA_ELASTICSEARCH_USER: elastic
+  ELASTICSEARCH_USER: elastic
+  
