@@ -21,6 +21,7 @@ module "postgres_db" {
 }
 
 locals {
+  seqr_image_tag = "49026972bb3b620f680f0bd97b79d3071e1afd66"
   k8s_node_resource_group_name = "${var.deployment_name}-aks-rg"
   k8s_secrets = {
     # Well-known secrets to place in k8s for consumption by SEQR service.
@@ -58,8 +59,9 @@ resource "helm_release" "seqr" {
       fqdn         = local.fqdn
       pg_host      = module.postgres_db.credentials.host
       pg_user      = module.postgres_db.credentials.username
+      short_sha    = substr(local.seqr_image_tag, 0, 6)
       image_repo   = "${azurerm_container_registry.acr.login_server}/seqr"
-      image_tag    = "78260b8553fcf683446287c09c28437db7655e2a"
+      image_tag    = local.seqr_image_tag
     })
   ]
 
