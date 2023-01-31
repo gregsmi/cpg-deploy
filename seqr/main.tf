@@ -14,8 +14,9 @@ module "postgres_db" {
 
 locals {
   k8s_node_resource_group_name = "${var.deployment_name}-aks-rg"
+  
+  # Secrets to place in k8s for consumption by SEQR service.
   k8s_secrets = {
-    # Secrets to place in k8s for consumption by SEQR service.
     postgres-secrets = {
       password = module.postgres_db.credentials.password
     }
@@ -110,8 +111,7 @@ resource "azurerm_role_assignment" "k8s_to_acr" {
 
 # Identity used for Github Action-based deployment of docker images.
 module "ci_cd_sp" {
-  source = "../azure/modules/sp"
-
+  source       = "../azure/modules/sp"
   display_name = "${var.deployment_name}-gh-deploy"
   role_assignments = [
     { role = "AcrPush", scope = azurerm_container_registry.acr.id },
