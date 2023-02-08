@@ -1,5 +1,5 @@
 locals {
-  fqdn_prefix = "ms-seqr"
+  fqdn_prefix = "ms-seqr" # probably should make this a function of deployment
   # Standard format for AKS-provided loadbalancer ingress FQDN.
   fqdn = "${local.fqdn_prefix}.${var.location}.cloudapp.azure.com"
 }
@@ -60,3 +60,30 @@ resource "kubernetes_manifest" "clusterissuer_letsencrypt" {
   manifest   = yamldecode(file("values/cluster-issuer.yaml"))
   depends_on = [helm_release.cert_manager]
 }
+
+resource "azuread_application" "oauth_app" {
+  display_name     = "SEQR (Microsoft Research ${var.deployment_name})"
+  identifier_uris  = ["api://${var.deployment_name}"]
+  sign_in_audience = "AzureADMyOrg"
+
+  web {
+    homepage_url  = "https://${local.fqdn}/"
+    redirect_uris = [
+      # The suffix on these URIs is determined by the specific 
+      # "social auth" backend provider and was determined empirically.
+      # https://github.com/python-social-auth/social-app-django
+      "http://localhost/complete/azuread-v2-tenant-oauth2/", 
+      "https://${local.fqdn}/complete/azuread-v2-tenant-oauth2/"
+    ]
+
+    implicit_grant {
+      access_token_issuance_enabled = false
+      id_token_issuance_enabled     = true
+    }
+  }
+}
+
+resource "azuread_application_password" "oauth_app" {
+  application_object_id = azuread_application.oauth_app.id
+}
+
