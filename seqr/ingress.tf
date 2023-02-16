@@ -1,5 +1,5 @@
 locals {
-  fqdn_prefix = "ms-seqr" # probably should make this a function of deployment
+  fqdn_prefix = var.deployment_name
   # Standard format for AKS-provided loadbalancer ingress FQDN.
   fqdn = "${local.fqdn_prefix}.${var.location}.cloudapp.azure.com"
 }
@@ -67,7 +67,7 @@ resource "azuread_application" "oauth_app" {
   sign_in_audience = "AzureADMyOrg"
 
   web {
-    homepage_url  = "https://${local.fqdn}/"
+    homepage_url = "https://${local.fqdn}/"
     redirect_uris = [
       # The suffix on these URIs is determined by the specific 
       # "social auth" backend provider and was determined empirically.

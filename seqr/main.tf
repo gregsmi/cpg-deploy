@@ -21,13 +21,20 @@ module "postgres_db" {
 }
 
 locals {
-  seqr_image_tag = "49026972bb3b620f680f0bd97b79d3071e1afd66"
+  seqr_image_tag               = "7290a7e03820484e9feed2cae0bf69071fd38304"
   k8s_node_resource_group_name = "${var.deployment_name}-aks-rg"
   k8s_secrets = {
     # Well-known secrets to place in k8s for consumption by SEQR service.
     postgres-secrets = { password = module.postgres_db.credentials.password }
     kibana-secrets   = { "elasticsearch.password" = random_password.elastic_password.result }
-    seqr-secrets     = { seqr_es_password = random_password.elastic_password.result, django_key = "random" }
+    seqr-secrets = {
+      django_key            = "random"
+      seqr_es_password      = random_password.elastic_password.result
+      # these 3 are imported as SOCIAL_AUTH_AZUREAD_V2_OAUTH2_* in seqr helm values.
+      azuread_client_id     = azuread_application.oauth_app.application_id
+      azuread_client_secret = azuread_application_password.oauth_app.value
+      azuread_tenant_id     = var.tenant_id
+    }
   }
 }
 
@@ -44,6 +51,18 @@ resource "azurerm_role_assignment" "k8s_to_acr" {
   role_definition_name = "AcrPull"
   scope                = azurerm_container_registry.acr.id
   principal_id         = module.k8s_cluster.principal_id
+}
+
+# Create the redis cache for SEQR to use.
+resource "helm_release" "redis" {
+  name       = "redis"
+  repository = "https://charts.bitnami.com/bitnami"
+  chart      = "redis"
+
+  set {
+    name  = "auth.enabled"
+    value = "false"
+  }
 }
 
 # Create the single SEQR container deployment after all prerequisite services.
@@ -70,6 +89,7 @@ resource "helm_release" "seqr" {
     helm_release.ingress_nginx,
     helm_release.elasticsearch,
     helm_release.kibana,
+    helm_release.redis,
   ]
 }
 

@@ -40,11 +40,31 @@ volumes:
     - key: ca.crt
       path: ca.crt
 
+additional_secrets:
+- name: SOCIAL_AUTH_AZUREAD_V2_OAUTH2_CLIENT_ID
+  valueFrom:
+    secretKeyRef:
+      name: seqr-secrets
+      key: azuread_client_id
+- name: SOCIAL_AUTH_AZUREAD_V2_OAUTH2_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: seqr-secrets
+      key: azuread_client_secret
+- name: SOCIAL_AUTH_AZUREAD_V2_OAUTH2_TENANT
+  valueFrom:
+    secretKeyRef:
+      name: seqr-secrets
+      key: azuread_tenant_id
+
 environment:
+ # prod/dev sets DEBUG=false
+  DEPLOYMENT_TYPE: dev
+  STATIC_MEDIA_DIR: static
   SEQR_CONTAINER_SHORT_SHA: "${short_sha}"
   POSTGRES_USERNAME: ${pg_user}
   POSTGRES_SERVICE_HOSTNAME: ${pg_host}
-  STATIC_MEDIA_DIR: static
+  REDIS_SERVICE_HOSTNAME: redis-master
   ELASTICSEARCH_SERVICE_HOSTNAME: elasticsearch-master
   ELASTICSEARCH_CA_PATH: /es-certs/ca.crt
   ELASTICSEARCH_PROTOCOL: https
