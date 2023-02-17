@@ -20,15 +20,20 @@ module "postgres_db" {
   database_names = ["reference_data_db", "seqrdb"]
 }
 
+resource "random_password" "django_key" {
+  length  = 22
+  special = false
+}
+
 locals {
-  seqr_image_tag               = "7290a7e03820484e9feed2cae0bf69071fd38304"
+  seqr_image_tag               = "230216-155225"
   k8s_node_resource_group_name = "${var.deployment_name}-aks-rg"
   k8s_secrets = {
     # Well-known secrets to place in k8s for consumption by SEQR service.
     postgres-secrets = { password = module.postgres_db.credentials.password }
     kibana-secrets   = { "elasticsearch.password" = random_password.elastic_password.result }
     seqr-secrets = {
-      django_key            = "random"
+      django_key            = random_password.django_key.result
       seqr_es_password      = random_password.elastic_password.result
       # these 3 are imported as SOCIAL_AUTH_AZUREAD_V2_OAUTH2_* in seqr helm values.
       azuread_client_id     = azuread_application.oauth_app.application_id
@@ -78,7 +83,6 @@ resource "helm_release" "seqr" {
       fqdn         = local.fqdn
       pg_host      = module.postgres_db.credentials.host
       pg_user      = module.postgres_db.credentials.username
-      short_sha    = substr(local.seqr_image_tag, 0, 6)
       image_repo   = "${azurerm_container_registry.acr.login_server}/seqr"
       image_tag    = local.seqr_image_tag
     })

@@ -61,7 +61,7 @@ environment:
  # prod/dev sets DEBUG=false
   DEPLOYMENT_TYPE: dev
   STATIC_MEDIA_DIR: static
-  SEQR_CONTAINER_SHORT_SHA: "${short_sha}"
+  SEQR_CONTAINER_BUILD_TAG: "${image_tag}"
   POSTGRES_USERNAME: ${pg_user}
   POSTGRES_SERVICE_HOSTNAME: ${pg_host}
   REDIS_SERVICE_HOSTNAME: redis-master
