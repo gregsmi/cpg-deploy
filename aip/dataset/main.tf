@@ -1,5 +1,5 @@
 data "azurerm_resource_group" "rg" {
-  name     = "${var.definition.projectId}-rg"
+  name     = "${var.definition.rg}"
 }
 
 resource "azurerm_storage_account" "storage" {
