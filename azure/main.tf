@@ -42,7 +42,7 @@ locals {
     web_host_base : "${local.web_app_name}.azurewebsites.net",
     container_registry : azurerm_container_registry.acr.login_server,
     deployment_name : var.deployment_name,
-    reference_base : "hail-az://${data.azurerm_storage_account.main.name}/${azurerm_storage_container.reference.name}"
+    reference_base : "https://${data.azurerm_storage_account.main.name}.blob.core.windows.net/${azurerm_storage_container.reference.name}"
   }
 }
 
