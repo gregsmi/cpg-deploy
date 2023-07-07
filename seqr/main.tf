@@ -26,7 +26,7 @@ resource "random_password" "django_key" {
 }
 
 locals {
-  seqr_image_tag               = "230216-155225"
+  seqr_image_tag               = "230707-150020"
   k8s_node_resource_group_name = "${var.deployment_name}-aks-rg"
   k8s_secrets = {
     # Well-known secrets to place in k8s for consumption by SEQR service.

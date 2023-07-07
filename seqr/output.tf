@@ -3,6 +3,11 @@ output "public_ip" {
   value       = azurerm_public_ip.ingress.ip_address
 }
 
+output "web_address" {
+  description = "The web address of the SEQR website."
+  value       = "https://${local.fqdn}"
+}
+
 output "AZURE_CREDENTIALS" {
   value     = module.ci_cd_sp.credentials
   sensitive = true
