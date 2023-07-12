@@ -9,8 +9,18 @@ output "web_address" {
 }
 
 output "AZURE_CREDENTIALS" {
-  value     = module.ci_cd_sp.credentials
-  sensitive = true
+  description = "The credentials of the Azure service principal used for Github image build."
+  value       = module.ci_cd_sp.credentials
+  sensitive   = true
+}
+
+output "ELASTICSEARCH_CREDENTIALS" {
+  description = "The credentials of the Elasticsearch cluster."
+  value       = {
+    username = "elastic"
+    password = random_password.elastic_password.result
+  }
+  sensitive   = true
 }
 
 output "oauth_client_id" {

@@ -1,12 +1,12 @@
-resource "azurerm_resource_group" "rg" {
+# Master resource group for deployment (unmanaged, created by terraform_init.sh)
+data "azurerm_resource_group" "rg" {
   name     = "${var.deployment_name}-rg"
-  location = var.location
 }
 
 resource "azurerm_container_registry" "acr" {
   name                = "${var.deployment_name}acr"
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = azurerm_resource_group.rg.location
+  resource_group_name = data.azurerm_resource_group.rg.name
+  location            = data.azurerm_resource_group.rg.location
   admin_enabled       = true
   sku                 = "Premium"
 }
@@ -14,7 +14,7 @@ resource "azurerm_container_registry" "acr" {
 module "postgres_db" {
   source = "./modules/db"
 
-  resource_group = azurerm_resource_group.rg
+  resource_group = data.azurerm_resource_group.rg
   server_name    = "seqr-pg"
   subnet_id      = azurerm_subnet.pg_subnet.id
   database_names = ["reference_data_db", "seqrdb"]
@@ -33,8 +33,8 @@ locals {
     postgres-secrets = { password = module.postgres_db.credentials.password }
     kibana-secrets   = { "elasticsearch.password" = random_password.elastic_password.result }
     seqr-secrets = {
-      django_key            = random_password.django_key.result
-      seqr_es_password      = random_password.elastic_password.result
+      django_key       = random_password.django_key.result
+      seqr_es_password = random_password.elastic_password.result
       # these 3 are imported as SOCIAL_AUTH_AZUREAD_V2_OAUTH2_* in seqr helm values.
       azuread_client_id     = azuread_application.oauth_app.application_id
       azuread_client_secret = azuread_application_password.oauth_app.value
@@ -46,7 +46,7 @@ locals {
 module "k8s_cluster" {
   source = "./modules/k8s"
 
-  resource_group           = azurerm_resource_group.rg
+  resource_group           = data.azurerm_resource_group.rg
   node_resource_group_name = local.k8s_node_resource_group_name
   subnet_id                = azurerm_subnet.k8s_subnet.id
   secrets                  = local.k8s_secrets
@@ -55,6 +55,14 @@ module "k8s_cluster" {
 resource "azurerm_role_assignment" "k8s_to_acr" {
   role_definition_name = "AcrPull"
   scope                = azurerm_container_registry.acr.id
+  principal_id         = module.k8s_cluster.principal_id
+}
+
+# AKS needs Contributor access to the RG hosting the storage 
+# account in order to manage blobfuse-mounted volumes.
+resource "azurerm_role_assignment" "k8s_to_rg" {
+  role_definition_name = "Contributor"
+  scope                = data.azurerm_resource_group.rg.id
   principal_id         = module.k8s_cluster.principal_id
 }
 

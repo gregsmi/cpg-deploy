@@ -6,7 +6,7 @@ locals {
 
 resource "azurerm_public_ip" "ingress" {
   name     = "ingress-ip"
-  location = azurerm_resource_group.rg.location
+  location = data.azurerm_resource_group.rg.location
   # IP resource has to be created in the k8s node resource group for proper permissions.
   resource_group_name = local.k8s_node_resource_group_name
   allocation_method   = "Static"
@@ -72,7 +72,7 @@ resource "azuread_application" "oauth_app" {
       # The suffix on these URIs is determined by the specific 
       # "social auth" backend provider and was determined empirically.
       # https://github.com/python-social-auth/social-app-django
-      "http://localhost/complete/azuread-v2-tenant-oauth2/", 
+      "http://localhost/complete/azuread-v2-tenant-oauth2/",
       "https://${local.fqdn}/complete/azuread-v2-tenant-oauth2/"
     ]
 
