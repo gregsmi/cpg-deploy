@@ -1,6 +1,6 @@
 # Master resource group for deployment (unmanaged, created by terraform_init.sh)
 data "azurerm_resource_group" "rg" {
-  name     = "${var.deployment_name}-rg"
+  name = "${var.deployment_name}-rg"
 }
 
 resource "azurerm_container_registry" "acr" {
@@ -34,10 +34,16 @@ locals {
     seqr-secrets = {
       django_key       = random_password.django_key.result
       seqr_es_password = random_password.elastic_password.result
-      # these 3 are imported as SOCIAL_AUTH_AZUREAD_V2_OAUTH2_* in seqr helm values.
+      # These 3 are imported as SOCIAL_AUTH_AZUREAD_V2_OAUTH2_* in seqr helm values.
       azuread_client_id     = azuread_application.oauth_app.application_id
       azuread_client_secret = azuread_application_password.oauth_app.value
       azuread_tenant_id     = var.tenant_id
+    }
+    # k8s needs storage account/secret in order to fuse mount blob volumes.
+    # These are well-known names dictated by the AKS blobfuse CSI driver.
+    blobstore-secrets = {
+      azurestorageaccountname = data.azurerm_storage_account.main.name
+      azurestorageaccountkey  = data.azurerm_storage_account.main.primary_access_key
     }
   }
 }

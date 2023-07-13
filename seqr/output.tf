@@ -16,11 +16,11 @@ output "AZURE_CREDENTIALS" {
 
 output "ELASTICSEARCH_CREDENTIALS" {
   description = "The credentials of the Elasticsearch cluster."
-  value       = {
+  value = {
     username = "elastic"
     password = random_password.elastic_password.result
   }
-  sensitive   = true
+  sensitive = true
 }
 
 output "oauth_client_id" {

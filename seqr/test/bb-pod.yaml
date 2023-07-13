@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: busybox1
+  labels:
+    app: busybox1
+spec:
+  containers:
+  - image: busybox
+    command:
+      - sleep
+      - "3600"
+    imagePullPolicy: IfNotPresent
+    name: busybox
+    volumeMounts:
+      - name: refblob01
+        mountPath: "/vep_data"
+  volumes:
+    - name: refblob01
+      persistentVolumeClaim:
+        claimName: reference-volume-claim
