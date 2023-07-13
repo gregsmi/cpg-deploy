@@ -54,13 +54,6 @@ resource "helm_release" "cert_manager" {
   depends_on = [helm_release.ingress_nginx]
 }
 
-# Set up cert-manager ClusterIssuer to use nginx as the solver. May need to comment out
-# on first run, see https://github.com/hashicorp/terraform-provider-kubernetes/issues/1917
-resource "kubernetes_manifest" "clusterissuer_letsencrypt" {
-  manifest   = yamldecode(file("values/cluster-issuer.yaml"))
-  depends_on = [helm_release.cert_manager]
-}
-
 resource "azuread_application" "oauth_app" {
   display_name     = "SEQR (Microsoft Research ${var.deployment_name})"
   identifier_uris  = ["api://${var.deployment_name}"]

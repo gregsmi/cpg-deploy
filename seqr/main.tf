@@ -26,7 +26,6 @@ resource "random_password" "django_key" {
 }
 
 locals {
-  seqr_image_tag               = "230707-150020"
   k8s_node_resource_group_name = "${var.deployment_name}-aks-rg"
   k8s_secrets = {
     # Well-known secrets to place in k8s for consumption by SEQR service.
@@ -76,33 +75,6 @@ resource "helm_release" "redis" {
     name  = "auth.enabled"
     value = "false"
   }
-}
-
-# Create the single SEQR container deployment after all prerequisite services.
-resource "helm_release" "seqr" {
-  name       = "seqr"
-  repository = "https://broadinstitute.github.io/seqr-helm/"
-  chart      = "seqr"
-  version    = "0.0.12"
-
-  values = [
-    templatefile("values/seqr.yaml", {
-      service_port = 8000
-      fqdn         = local.fqdn
-      pg_host      = module.postgres_db.credentials.host
-      pg_user      = module.postgres_db.credentials.username
-      image_repo   = "${azurerm_container_registry.acr.login_server}/seqr"
-      image_tag    = local.seqr_image_tag
-    })
-  ]
-
-  depends_on = [
-    module.postgres_db,
-    helm_release.ingress_nginx,
-    helm_release.elasticsearch,
-    helm_release.kibana,
-    helm_release.redis,
-  ]
 }
 
 # Identity used for Github Action-based deployment of docker images.

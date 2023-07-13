@@ -20,6 +20,10 @@ resource "azurerm_kubernetes_cluster" "cluster" {
   identity {
     type = "SystemAssigned"
   }
+
+  storage_profile {
+    blob_driver_enabled = true
+  }
 }
 
 locals {
