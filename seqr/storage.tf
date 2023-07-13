@@ -21,7 +21,7 @@ resource "kubernetes_persistent_volume" "reference" {
   }
   spec {
     capacity = {
-      storage = "20Gi"
+      storage = "50Gi"
     }
     access_modes                     = ["ReadOnlyMany"]
     persistent_volume_reclaim_policy = "Retain"
@@ -54,7 +54,7 @@ resource "kubernetes_persistent_volume_claim" "reference" {
     access_modes = ["ReadOnlyMany"]
     resources {
       requests = {
-        storage = "20Gi"
+        storage = "50Gi"
       }
     }
     volume_name        = "reference-volume"

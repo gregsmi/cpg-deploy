@@ -15,6 +15,7 @@ spec:
     volumeMounts:
       - name: refblob01
         mountPath: "/vep_data"
+        subPath: "vep/99.0"
   volumes:
     - name: refblob01
       persistentVolumeClaim:

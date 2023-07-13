@@ -12,7 +12,7 @@ resource "helm_release" "elasticsearch" {
   timeout    = 900
 
   values = [
-    templatefile("values/elastic.yaml", {
+    templatefile("templates/elastic.yaml", {
       # default user created by chart is 'elastic' (not configurable)
       password = random_password.elastic_password.result
     })

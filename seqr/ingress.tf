@@ -31,7 +31,7 @@ resource "helm_release" "ingress_nginx" {
   create_namespace = true
 
   values = [
-    templatefile("values/nginx.yaml", {
+    templatefile("templates/nginx.yaml", {
       ip_address = azurerm_public_ip.ingress.ip_address
       dns_label  = local.fqdn_prefix
     })

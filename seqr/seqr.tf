@@ -8,7 +8,7 @@ resource "helm_release" "seqr" {
   timeout    = 300
 
   values = [
-    templatefile("values/seqr.yaml", {
+    templatefile("templates/seqr.yaml", {
       service_port = 8000
       fqdn         = local.fqdn
       pg_host      = module.postgres_db.credentials.host
@@ -30,6 +30,6 @@ resource "helm_release" "seqr" {
 # Set up cert-manager ClusterIssuer to use nginx as the solver. Also need to comment out
 # on first run, see https://github.com/hashicorp/terraform-provider-kubernetes/issues/1917
 resource "kubernetes_manifest" "clusterissuer_letsencrypt" {
-  manifest   = yamldecode(file("values/cluster-issuer.yaml"))
+  manifest   = yamldecode(file("templates/cluster-issuer.yaml"))
   depends_on = [helm_release.cert_manager]
 }
