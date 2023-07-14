@@ -13,10 +13,20 @@ spec:
     imagePullPolicy: IfNotPresent
     name: busybox
     volumeMounts:
-      - name: refblob01
+      - name: ref-blobstore
         mountPath: "/vep_data"
         subPath: "vep/99.0"
+        readOnly: true
+      - name: hadoop-creds
+        mountPath: "/spark_configs"
+        readOnly: true
   volumes:
-    - name: refblob01
+    - name: ref-blobstore
       persistentVolumeClaim:
         claimName: reference-volume-claim
+    - name: hadoop-creds
+      secret:
+        secretName: hadoop-creds
+        items:
+        - key: core-site.xml
+          path: core-site.xml

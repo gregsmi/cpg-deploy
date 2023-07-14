@@ -32,3 +32,9 @@ output "oauth_client_id" {
   }
   sensitive = true
 }
+
+output "hadoop_core_site_xml" {
+  description = "The Hadoop core-site.xml configuration."
+  value       = local.hadoop_core_site_xml
+  sensitive   = true
+}

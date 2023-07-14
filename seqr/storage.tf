@@ -12,6 +12,32 @@ resource "azurerm_storage_container" "reference" {
   container_access_type = "blob"
 }
 
+data "azurerm_storage_account" "data" {
+  # TODO Read this in from an infrastructure config file?
+  for_each            = { azcpg001sa = "azcpg001-rg" }
+  name                = each.key
+  resource_group_name = each.value
+}
+
+locals {
+  # TODO Consider switching from account key to service principal.
+  hadoop_core_site_xml = <<-EOT
+  <?xml version="1.0"?>
+  <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+  <configuration>
+
+    %{~for account in data.azurerm_storage_account.data~}
+    <property>
+      <name>fs.azure.account.key.${account.name}.dfs.core.windows.net</name>
+      <value>${account.primary_access_key}</value>
+    </property>
+    %{~endfor~}
+    
+  </configuration>
+  EOT
+}
+
 resource "kubernetes_persistent_volume" "reference" {
   metadata {
     name = "reference-volume"

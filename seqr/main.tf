@@ -28,6 +28,8 @@ resource "random_password" "django_key" {
 locals {
   k8s_node_resource_group_name = "${var.deployment_name}-aks-rg"
   k8s_secrets = {
+    # Authorization credentials for accessing storage accounts via abfss.
+    hadoop-creds     = { "core-site.xml" = local.hadoop_core_site_xml }
     # Well-known secrets to place in k8s for consumption by SEQR service.
     postgres-secrets = { password = module.postgres_db.credentials.password }
     kibana-secrets   = { "elasticsearch.password" = random_password.elastic_password.result }
@@ -40,7 +42,7 @@ locals {
       azuread_tenant_id     = var.tenant_id
     }
     # k8s needs storage account/secret in order to fuse mount blob volumes.
-    # These are well-known names dictated by the AKS blobfuse CSI driver.
+    # These are well-known key names dictated by the AKS blobfuse CSI driver.
     blobstore-secrets = {
       azurestorageaccountname = data.azurerm_storage_account.main.name
       azurestorageaccountkey  = data.azurerm_storage_account.main.primary_access_key
