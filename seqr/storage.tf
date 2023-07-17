@@ -22,20 +22,20 @@ data "azurerm_storage_account" "data" {
 locals {
   # TODO Consider switching from account key to service principal.
   hadoop_core_site_xml = <<-EOT
-  <?xml version="1.0"?>
-  <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 
-  <configuration>
+<configuration>
 
-    %{~for account in data.azurerm_storage_account.data~}
-    <property>
-      <name>fs.azure.account.key.${account.name}.dfs.core.windows.net</name>
-      <value>${account.primary_access_key}</value>
-    </property>
-    %{~endfor~}
-    
-  </configuration>
-  EOT
+  %{~for account in data.azurerm_storage_account.data~}
+  <property>
+    <name>fs.azure.account.key.${account.name}.dfs.core.windows.net</name>
+    <value>${account.primary_access_key}</value>
+  </property>
+  %{~endfor~}
+  
+</configuration>
+EOT
 }
 
 resource "kubernetes_persistent_volume" "reference" {
