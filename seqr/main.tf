@@ -27,9 +27,10 @@ resource "random_password" "django_key" {
 
 locals {
   k8s_node_resource_group_name = "${var.deployment_name}-aks-rg"
+
   k8s_secrets = {
     # Authorization credentials for accessing storage accounts via abfss.
-    hadoop-creds     = { "core-site.xml" = local.hadoop_core_site_xml }
+    hadoop-creds = { "core-site.xml" = local.hadoop_core_site_xml }
     # Well-known secrets to place in k8s for consumption by SEQR service.
     postgres-secrets = { password = module.postgres_db.credentials.password }
     kibana-secrets   = { "elasticsearch.password" = random_password.elastic_password.result }

@@ -13,6 +13,7 @@ resource "helm_release" "seqr" {
       fqdn         = local.fqdn
       pg_host      = module.postgres_db.credentials.host
       pg_user      = module.postgres_db.credentials.username
+      es_host      = local.es_nodename
       image_repo   = "${azurerm_container_registry.acr.login_server}/seqr"
       image_tag    = "230712-151435" # update with latest from seqr build
     })

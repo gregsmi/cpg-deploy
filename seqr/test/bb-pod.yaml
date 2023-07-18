@@ -20,6 +20,9 @@ spec:
       - name: hadoop-creds
         mountPath: "/spark_configs"
         readOnly: true
+      - name: es-ca-volume
+        mountPath: /es-certs
+        readOnly: true
   volumes:
     - name: ref-blobstore
       persistentVolumeClaim:
@@ -30,3 +33,9 @@ spec:
         items:
         - key: core-site.xml
           path: core-site.xml
+    - name: es-ca-volume
+      secret:
+        secretName: elasticsearch-master-certs
+        items:
+        - key: ca.crt
+          path: ca.crt

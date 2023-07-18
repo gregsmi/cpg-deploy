@@ -12,8 +12,10 @@ resource "azurerm_storage_container" "reference" {
   container_access_type = "blob"
 }
 
+# Reference to storage accounts where data may be pulled from by 
+# loading jobs - these will be configured for hadoop abfss access.
 data "azurerm_storage_account" "data" {
-  # TODO Read this in from an infrastructure config file?
+  # TODO Read these in from an infrastructure config file?
   for_each            = { azcpg001sa = "azcpg001-rg" }
   name                = each.key
   resource_group_name = each.value

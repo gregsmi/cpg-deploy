@@ -1,7 +1,9 @@
 volumeClaimTemplate:
+  accessModes: [ReadWriteOnce]
+  storageClassName: azureblob-fuse-premium
   resources:
     requests:
-      storage: 10Gi
+      storage: ${storage_size}
 
 secret:
   password: ${password}
