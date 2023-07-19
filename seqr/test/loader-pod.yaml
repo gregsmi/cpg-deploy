@@ -12,9 +12,9 @@ spec:
     args:
       - "abfss://data@azcpg001sa.dfs.core.windows.net/GRCh38/1kg_sample_test.vcf.bgz"
       - "abfss://data@azcpg001sa.dfs.core.windows.net/GRCh38/1kg_sample_test.mt"
-      - "38"
       - "WGS"
       - "test1kg"
+      - "/luigi_configs/seqr-load-GRCh38.toml"
     imagePullPolicy: Always
     name: seqr-loader
     volumeMounts:
