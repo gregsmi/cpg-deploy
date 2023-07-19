@@ -8,13 +8,15 @@ spec:
   restartPolicy: Never
   containers:
   - image: msseqr01acr.azurecr.io/azure/pipeline-runner:latest
-    command: ["load_data_local.sh"]
-    args:
-      - "abfss://data@azcpg001sa.dfs.core.windows.net/GRCh38/1kg_sample_test.vcf.bgz"
-      - "abfss://data@azcpg001sa.dfs.core.windows.net/GRCh38/1kg_sample_test.mt"
-      - "WGS"
-      - "test1kg"
-      - "/luigi_configs/seqr-load-GRCh38.toml"
+    command: ["luigi", "--local-scheduler", "--module", "seqr_loading"]
+    args: ["SeqrMTToESTask",
+      "--source-paths", "abfss://data@azcpg001sa.dfs.core.windows.net/GRCh38/1kg_sample_test.vcf.bgz",
+      "--dest-path", "abfss://data@azcpg001sa.dfs.core.windows.net/GRCh38/1kg_sample_test.mt",
+      "--sample-type", "WGS",
+      "--es-index-min-num-shards", "1",
+      "--es-index", "test1kg",
+      "--es-password", "$(ELASTIC_SEARCH_PASSWORD)"
+    ]
     imagePullPolicy: Always
     name: seqr-loader
     volumeMounts:
@@ -34,6 +36,8 @@ spec:
           secretKeyRef:
             name: seqr-secrets
             key: seqr_es_password
+      - name: LUIGI_CONFIG_PATH
+        value: "/luigi_configs/seqr-load-GRCh38.toml"
   volumes:
     - name: ref-blobstore
       persistentVolumeClaim:
