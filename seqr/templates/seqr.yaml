@@ -1,0 +1,74 @@
+service:
+  type: ClusterIP
+  port: ${service_port}
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+  hosts:
+  - host: ${fqdn}
+    paths:
+    - path: /
+      pathType: Prefix
+  tls:
+  - secretName: tls-secret
+    hosts:
+    - ${fqdn}
+    
+image:
+  # Fully-qualified image repo/name and tag.
+  repository: ${image_repo}
+  tag: ${image_tag}
+
+# Enabling this makes seqr look for passwords in both kibana and ES secrets 
+# and mount the passwords in as KIBANA_ES_PASSWORD and SEQR_ES_PASSWORD.
+enable_elasticsearch_auth: true
+
+# Default ES Helm chart generates a self-signed cert so 
+# we need to mount the CA from the ES secret for seqr.
+volumeMounts:
+- name: es-ca-volume
+  mountPath: /es-certs
+  readOnly: true
+volumes:
+- name: es-ca-volume
+  secret:
+    secretName: ${es_host}-certs
+    items:
+    - key: ca.crt
+      path: ca.crt
+
+additional_secrets:
+- name: SOCIAL_AUTH_AZUREAD_V2_OAUTH2_CLIENT_ID
+  valueFrom:
+    secretKeyRef:
+      name: seqr-secrets
+      key: azuread_client_id
+- name: SOCIAL_AUTH_AZUREAD_V2_OAUTH2_SECRET
+  valueFrom:
+    secretKeyRef:
+      name: seqr-secrets
+      key: azuread_client_secret
+- name: SOCIAL_AUTH_AZUREAD_V2_OAUTH2_TENANT
+  valueFrom:
+    secretKeyRef:
+      name: seqr-secrets
+      key: azuread_tenant_id
+
+environment:
+ # prod/dev sets DEBUG=false
+  DEPLOYMENT_TYPE: dev
+  STATIC_MEDIA_DIR: static
+  SEQR_CONTAINER_BUILD_TAG: "${image_tag}"
+  POSTGRES_USERNAME: ${pg_user}
+  POSTGRES_SERVICE_HOSTNAME: ${pg_host}
+  REDIS_SERVICE_HOSTNAME: redis-master
+  ELASTICSEARCH_SERVICE_HOSTNAME: ${es_host}
+  ELASTICSEARCH_CA_PATH: /es-certs/ca.crt
+  ELASTICSEARCH_PROTOCOL: https
+  # BUGBUG when auth is on the ES/kibana users are hardcoded to 'seqr'/'kibana' 
+  # respectively but the default Helm user for ES & kibana is 'elastic'.
+  KIBANA_ELASTICSEARCH_USER: elastic
+  ELASTICSEARCH_USER: elastic

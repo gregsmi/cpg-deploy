@@ -1,0 +1,56 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: seqr-loader
+  labels:
+    app: seqr-loader
+spec:
+  restartPolicy: Never
+  containers:
+  - image: msseqr01acr.azurecr.io/azure/pipeline-runner:latest
+    command: ["luigi", "--local-scheduler", "--module", "seqr_loading"]
+    args: ["SeqrMTToESTask",
+      "--source-paths", "abfss://data@azcpg001sa.dfs.core.windows.net/GRCh38/1kg_sample_test.vcf.bgz",
+      "--dest-path", "abfss://data@azcpg001sa.dfs.core.windows.net/GRCh38/1kg_sample_test.mt",
+      "--sample-type", "WGS",
+      "--es-index-min-num-shards", "1",
+      "--es-index", "test1kg",
+      "--es-password", "$(ELASTIC_SEARCH_PASSWORD)"
+    ]
+    imagePullPolicy: Always
+    name: seqr-loader
+    volumeMounts:
+      - name: ref-blobstore
+        mountPath: "/vep_data"
+        subPath: "vep/99.0"
+        readOnly: true
+      - name: hadoop-creds
+        mountPath: "/spark_configs"
+        readOnly: true
+      - name: es-ca-volume
+        mountPath: /es-certs
+        readOnly: true
+    env:
+      - name: ELASTIC_SEARCH_PASSWORD
+        valueFrom:
+          secretKeyRef:
+            name: seqr-secrets
+            key: seqr_es_password
+      - name: LUIGI_CONFIG_PATH
+        value: "/luigi_configs/seqr-load-GRCh38.toml"
+  volumes:
+    - name: ref-blobstore
+      persistentVolumeClaim:
+        claimName: reference-volume-claim
+    - name: hadoop-creds
+      secret:
+        secretName: hadoop-creds
+        items:
+        - key: core-site.xml
+          path: core-site.xml
+    - name: es-ca-volume
+      secret:
+        secretName: elasticsearch-master-certs
+        items:
+        - key: ca.crt
+          path: ca.crt

@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: test-ingress
+spec:
+  ingressClassName: nginx
+  # tls:
+  # - hosts:
+  #   - ms-seqr.eastus.cloudapp.azure.com
+  #   secretName: tls-secret
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: seqr
+            port: 
+              number: 8000
+    host: ms-seqr.eastus.cloudapp.azure.com

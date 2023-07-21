@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: busybox1
+  labels:
+    app: busybox1
+spec:
+  containers:
+  - image: busybox
+    command:
+      - sleep
+      - "3600"
+    imagePullPolicy: IfNotPresent
+    name: busybox
+    volumeMounts:
+      - name: ref-blobstore
+        mountPath: "/vep_data"
+        subPath: "vep/99.0"
+        readOnly: true
+      - name: hadoop-creds
+        mountPath: "/spark_configs"
+        readOnly: true
+      - name: es-ca-volume
+        mountPath: /es-certs
+        readOnly: true
+  volumes:
+    - name: ref-blobstore
+      persistentVolumeClaim:
+        claimName: reference-volume-claim
+    - name: hadoop-creds
+      secret:
+        secretName: hadoop-creds
+        items:
+        - key: core-site.xml
+          path: core-site.xml
+    - name: es-ca-volume
+      secret:
+        secretName: elasticsearch-master-certs
+        items:
+        - key: ca.crt
+          path: ca.crt
