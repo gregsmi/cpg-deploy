@@ -22,6 +22,8 @@ data "azurerm_storage_account" "data" {
 }
 
 locals {
+  # core-site.xml is a default config file for spark/hadoop that
+  # the azure abfss driver will use for storage account credentials.
   # TODO Consider switching from account key to service principal.
   hadoop_core_site_xml = <<-EOT
 <?xml version="1.0"?>
