@@ -23,7 +23,6 @@ resource "helm_release" "seqr" {
     module.postgres_db,
     helm_release.ingress_nginx,
     helm_release.elasticsearch,
-    helm_release.kibana,
     helm_release.redis,
   ]
 }

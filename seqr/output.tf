@@ -23,6 +23,15 @@ output "ELASTICSEARCH_CREDENTIALS" {
   sensitive = true
 }
 
+output "POSTGRES_CREDENTIALS" {
+  description = "The credentials of the PostgreSQL database."
+  value = {
+    username = module.postgres_db.credentials.username
+    password = module.postgres_db.credentials.password
+  }
+  sensitive = true
+}
+
 output "oauth_client_id" {
   description = "The client credentials of the AzureAD application used for OAuth."
   value = {
