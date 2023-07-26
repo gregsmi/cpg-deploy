@@ -134,7 +134,7 @@ ensure_storage_container() {
       if [[ $? -ne 0 ]]; then
         err "Failed to create storage container ${container_name}"
       fi
-      # Wait for storage container to create, TODO consider polling.
+      # Wait for storage container to create.
       sleep 5
   else
     err "Container ${container_name} doesn't exist (run with '-c' for first-time initialization)."

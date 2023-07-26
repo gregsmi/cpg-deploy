@@ -16,8 +16,8 @@ resource "azurerm_postgresql_server" "server" {
   administrator_login          = local.db_root_user
   administrator_login_password = random_password.db_root_password.result
 
-  sku_name   = "GP_Gen5_8"
-  storage_mb = 5120 # TODO GRS how big?
+  sku_name   = "GP_Gen5_2"
+  storage_mb = 5120
   version    = "11"
 
   # Only accessible via private endpoint, no SSL required.
