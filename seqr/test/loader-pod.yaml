@@ -23,7 +23,6 @@ spec:
       - name: ref-blobstore
         mountPath: "/vep_data"
         subPath: "vep/99.0"
-        readOnly: true
       - name: hadoop-creds
         mountPath: "/spark_configs"
         readOnly: true
