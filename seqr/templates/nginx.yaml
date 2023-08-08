@@ -1,7 +1,0 @@
-controller:
-  service:
-    loadBalancerIP: ${ip_address}
-    annotations:
-      # note without a health-probe annotation all ingress to FQDNs fails
-      service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: /healthz
-      service.beta.kubernetes.io/azure-dns-label-name: ${dns_label}
